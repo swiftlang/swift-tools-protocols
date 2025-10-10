@@ -37,4 +37,8 @@ private let notificationTypes: [NotificationType.Type] = [
   TaskStartNotification.self,
 ]
 
-public let bspRegistry = MessageRegistry(requests: requestTypes, notifications: notificationTypes)
+extension MessageRegistry {
+  public var bspProtocol: MessageRegistry {
+    MessageRegistry(requests: requestTypes, notifications: notificationTypes)
+  }
+}

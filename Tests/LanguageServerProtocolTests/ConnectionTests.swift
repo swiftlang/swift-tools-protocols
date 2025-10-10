@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 import LanguageServerProtocol
-import SKTestSupport
+import ToolsProtocolsTestSupport
 import XCTest
 
 class ConnectionTests: XCTestCase {

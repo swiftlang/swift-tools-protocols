@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-import SKLogging
-import SKTestSupport
-import SwiftExtensions
+@_spi(SourceKitLSP) import SKLogging
+import ToolsProtocolsTestSupport
+@_spi(SourceKitLSP) import SwiftExtensions
 import XCTest
 
 #if os(Windows)

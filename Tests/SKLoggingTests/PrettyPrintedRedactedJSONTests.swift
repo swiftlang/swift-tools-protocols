@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
-@_spi(Testing) import SKLogging
-import SKTestSupport
+@_spi(Testing) @_spi(SourceKitLSP) import SKLogging
+import ToolsProtocolsTestSupport
 import XCTest
 
 class PrettyPrintedRedactedJSONTests: XCTestCase {
@@ -31,7 +31,7 @@ class PrettyPrintedRedactedJSONTests: XCTestCase {
       {
         "inner" : {
           "publicValue" : 42,
-          "redactedValue" : "<private 5e884898da280471>"
+          "redactedValue" : "<private>"
         }
       }
       """
@@ -71,7 +71,7 @@ class PrettyPrintedRedactedJSONTests: XCTestCase {
       Struct(value: "password").prettyPrintedRedactedJSON,
       """
       {
-        "value" : "<private 5e884898da280471>"
+        "value" : "<private>"
       }
       """
     )
@@ -111,8 +111,8 @@ class PrettyPrintedRedactedJSONTests: XCTestCase {
       """
       {
         "value" : [
-          "<private 5e884898da280471>",
-          "<private 8c6976e5b5410415>"
+          "<private>",
+          "<private>"
         ]
       }
       """

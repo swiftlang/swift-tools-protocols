@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-@_spi(Testing) import SKLogging
-import SKTestSupport
+@_spi(Testing) @_spi(SourceKitLSP) import SKLogging
+import ToolsProtocolsTestSupport
 import XCTest
 
 private func assertLogging(

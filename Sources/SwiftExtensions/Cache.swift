@@ -11,12 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 /// Essentially a dictionary where results are asynchronously computed on access.
-package class Cache<Key: Sendable & Hashable, Result: Sendable> {
+@_spi(SourceKitLSP) public class Cache<Key: Sendable & Hashable, Result: Sendable> {
   private var storage: [Key: Task<Result, Error>] = [:]
 
-  package init() {}
+  @_spi(SourceKitLSP) public init() {}
 
-  package func get(
+  @_spi(SourceKitLSP) public func get(
     _ key: Key,
     isolation: isolated any Actor,
     compute: @Sendable @escaping (Key) async throws -> Result
@@ -44,7 +44,7 @@ package class Cache<Key: Sendable & Hashable, Result: Sendable> {
 
   /// Get the value cached for `key`. If no value exists for `key`, try deriving the result from an existing cache entry
   /// that satisfies `canReuseKey` by applying `transform` to that result.
-  package func getDerived(
+  @_spi(SourceKitLSP) public func getDerived(
     isolation: isolated any Actor,
     _ key: Key,
     canReuseKey: @Sendable @escaping (Key) -> Bool,
@@ -68,7 +68,7 @@ package class Cache<Key: Sendable & Hashable, Result: Sendable> {
     return nil
   }
 
-  package func clear(isolation: isolated any Actor, where condition: (Key) -> Bool) {
+  @_spi(SourceKitLSP) public func clear(isolation: isolated any Actor, where condition: (Key) -> Bool) {
     for key in storage.keys {
       if condition(key) {
         storage[key] = nil
@@ -76,7 +76,7 @@ package class Cache<Key: Sendable & Hashable, Result: Sendable> {
     }
   }
 
-  package func clearAll(isolation: isolated any Actor) {
+  @_spi(SourceKitLSP) public func clearAll(isolation: isolated any Actor) {
     storage.removeAll()
   }
 }

@@ -1,6 +1,0 @@
-module Csourcekitd {
-  header "sourcekitd_functions.h"
-  header "CodeCompletionSwiftInterop.h"
-  header "plugin.h"
-  export *
-}

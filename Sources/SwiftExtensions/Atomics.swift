@@ -10,13 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-import CAtomics
+import ToolsProtocolsCAtomics
 
 // TODO: Use atomic types from the standard library (https://github.com/swiftlang/sourcekit-lsp/issues/1949)
-package final class AtomicBool: Sendable {
+@_spi(SourceKitLSP) public final class AtomicBool: Sendable {
   private nonisolated(unsafe) let atomic: UnsafeMutablePointer<CAtomicUInt32>
 
-  package init(initialValue: Bool) {
+  @_spi(SourceKitLSP) public init(initialValue: Bool) {
     self.atomic = atomic_uint32_create(initialValue ? 1 : 0)
   }
 
@@ -24,7 +24,7 @@ package final class AtomicBool: Sendable {
     atomic_uint32_destroy(atomic)
   }
 
-  package var value: Bool {
+  @_spi(SourceKitLSP) public var value: Bool {
     get {
       atomic_uint32_get(atomic) != 0
     }
@@ -34,10 +34,10 @@ package final class AtomicBool: Sendable {
   }
 }
 
-package final class AtomicUInt8: Sendable {
+@_spi(SourceKitLSP) public final class AtomicUInt8: Sendable {
   private nonisolated(unsafe) let atomic: UnsafeMutablePointer<CAtomicUInt32>
 
-  package init(initialValue: UInt8) {
+  @_spi(SourceKitLSP) public init(initialValue: UInt8) {
     self.atomic = atomic_uint32_create(UInt32(initialValue))
   }
 
@@ -45,7 +45,7 @@ package final class AtomicUInt8: Sendable {
     atomic_uint32_destroy(atomic)
   }
 
-  package var value: UInt8 {
+  @_spi(SourceKitLSP) public var value: UInt8 {
     get {
       UInt8(atomic_uint32_get(atomic))
     }
@@ -55,14 +55,14 @@ package final class AtomicUInt8: Sendable {
   }
 }
 
-package final class AtomicUInt32: Sendable {
+@_spi(SourceKitLSP) public final class AtomicUInt32: Sendable {
   private nonisolated(unsafe) let atomic: UnsafeMutablePointer<CAtomicUInt32>
 
-  package init(initialValue: UInt32) {
+  @_spi(SourceKitLSP) public init(initialValue: UInt32) {
     self.atomic = atomic_uint32_create(initialValue)
   }
 
-  package var value: UInt32 {
+  @_spi(SourceKitLSP) public var value: UInt32 {
     get {
       atomic_uint32_get(atomic)
     }
@@ -75,19 +75,19 @@ package final class AtomicUInt32: Sendable {
     atomic_uint32_destroy(atomic)
   }
 
-  package func fetchAndIncrement() -> UInt32 {
+  @_spi(SourceKitLSP) public func fetchAndIncrement() -> UInt32 {
     return atomic_uint32_fetch_and_increment(atomic)
   }
 }
 
-package final class AtomicInt32: Sendable {
+@_spi(SourceKitLSP) public final class AtomicInt32: Sendable {
   private nonisolated(unsafe) let atomic: UnsafeMutablePointer<CAtomicInt32>
 
-  package init(initialValue: Int32) {
+  @_spi(SourceKitLSP) public init(initialValue: Int32) {
     self.atomic = atomic_int32_create(initialValue)
   }
 
-  package var value: Int32 {
+  @_spi(SourceKitLSP) public var value: Int32 {
     get {
       atomic_int32_get(atomic)
     }
@@ -100,7 +100,7 @@ package final class AtomicInt32: Sendable {
     atomic_int32_destroy(atomic)
   }
 
-  package func fetchAndIncrement() -> Int32 {
+  @_spi(SourceKitLSP) public func fetchAndIncrement() -> Int32 {
     return atomic_int32_fetch_and_increment(atomic)
   }
 }

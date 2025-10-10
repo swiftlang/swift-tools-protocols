@@ -12,7 +12,7 @@
 
 extension Sequence {
   /// Just like `Sequence.map` but allows an `async` transform function.
-  package func asyncMap<T>(
+  @_spi(SourceKitLSP) public func asyncMap<T>(
     _ transform: (Element) async throws -> T
   ) async rethrows -> [T] {
     var result: [T] = []
@@ -26,7 +26,7 @@ extension Sequence {
   }
 
   /// Just like `Sequence.flatMap` but allows an `async` transform function.
-  package func asyncFlatMap<SegmentOfResult: Sequence>(
+  @_spi(SourceKitLSP) public func asyncFlatMap<SegmentOfResult: Sequence>(
     _ transform: (Element) async throws -> SegmentOfResult
   ) async rethrows -> [SegmentOfResult.Element] {
     var result: [SegmentOfResult.Element] = []
@@ -40,7 +40,7 @@ extension Sequence {
   }
 
   /// Just like `Sequence.compactMap` but allows an `async` transform function.
-  package func asyncCompactMap<T>(
+  @_spi(SourceKitLSP) public func asyncCompactMap<T>(
     _ transform: (Element) async throws -> T?
   ) async rethrows -> [T] {
     var result: [T] = []
@@ -55,7 +55,7 @@ extension Sequence {
   }
 
   /// Just like `Sequence.map` but allows an `async` transform function.
-  package func asyncFilter(
+  @_spi(SourceKitLSP) public func asyncFilter(
     _ predicate: (Element) async throws -> Bool
   ) async rethrows -> [Element] {
     var result: [Element] = []
@@ -70,7 +70,7 @@ extension Sequence {
   }
 
   /// Just like `Sequence.first` but allows an `async` predicate function.
-  package func asyncFirst(where predicate: (Element) async throws -> Bool) async rethrows -> Element? {
+  @_spi(SourceKitLSP) public func asyncFirst(where predicate: (Element) async throws -> Bool) async rethrows -> Element? {
     for element in self {
       if try await predicate(element) {
         return element
@@ -81,7 +81,7 @@ extension Sequence {
   }
 
   /// Just like `Sequence.contains` but allows an `async` predicate function.
-  package func asyncContains(
+  @_spi(SourceKitLSP) public func asyncContains(
     where predicate: (Element) async throws -> Bool
   ) async rethrows -> Bool {
     return try await asyncFirst(where: predicate) != nil

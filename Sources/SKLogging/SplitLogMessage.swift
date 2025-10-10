@@ -17,7 +17,7 @@
 ///
 ///  - Note: This will only split along newline boundary. If a single line is longer than `maxChunkSize`, it won't be
 ///    split. This is fine for compiler argument splitting since a single argument is rarely longer than 800 characters.
-package func splitLongMultilineMessage(message: String) -> [String] {
+@_spi(SourceKitLSP) public func splitLongMultilineMessage(message: String) -> [String] {
   let maxChunkSize = 800
   var chunks: [String] = []
   for line in message.split(separator: "\n", omittingEmptySubsequences: false) {
@@ -43,7 +43,7 @@ extension Logger {
     var redactedDescription: String
   }
 
-  package func logFullObjectInMultipleLogMessages(
+  @_spi(SourceKitLSP) public func logFullObjectInMultipleLogMessages(
     level: LogLevel = .default,
     header: StaticString,
     _ subject: some CustomLogStringConvertible

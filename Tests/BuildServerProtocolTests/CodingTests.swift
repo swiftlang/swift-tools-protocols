@@ -13,7 +13,7 @@
 import BuildServerProtocol
 import Foundation
 import LanguageServerProtocol
-import SKTestSupport
+import ToolsProtocolsTestSupport
 import XCTest
 
 final class CodingTests: XCTestCase {

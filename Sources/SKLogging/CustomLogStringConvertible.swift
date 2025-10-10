@@ -12,13 +12,9 @@
 
 public import Foundation
 
-#if !NO_CRYPTO_DEPENDENCY
-import Crypto
-#endif
-
 /// An object that can printed for logging and also offers a redacted description
 /// when logging in contexts in which private information shouldn't be captured.
-package protocol CustomLogStringConvertible: CustomStringConvertible, Sendable {
+public protocol CustomLogStringConvertible: CustomStringConvertible, Sendable {
   /// A full description of the object.
   var description: String { get }
 
@@ -56,7 +52,7 @@ public final class CustomLogStringConvertibleWrapper: NSObject, Sendable {
   // We can't unconditionally mark it as @objc because eg. Linux doesn't have the Objective-C runtime.
   @objc
   #endif
-  package var redactedDescription: String {
+  @_spi(SourceKitLSP) public var redactedDescription: String {
     underlyingObject.redactedDescription
   }
 }
@@ -65,7 +61,7 @@ extension CustomLogStringConvertible {
   /// Returns an object that can be passed to OSLog, which will print the
   /// `redactedDescription` if logging of private information is disabled and
   /// will log `description` otherwise.
-  package var forLogging: CustomLogStringConvertibleWrapper {
+  @_spi(SourceKitLSP) public var forLogging: CustomLogStringConvertibleWrapper {
     return CustomLogStringConvertibleWrapper(self)
   }
 }
@@ -73,13 +69,8 @@ extension CustomLogStringConvertible {
 extension String {
   /// A hash value that can be logged in a redacted description without
   /// disclosing any private information about the string.
-  package var hashForLogging: String {
-    #if NO_CRYPTO_DEPENDENCY
+  @_spi(SourceKitLSP) public var hashForLogging: String {
     return "<private>"
-    #else
-    let hash = SHA256.hash(data: Data(self.utf8)).prefix(8).map { String(format: "%02x", $0) }.joined()
-    return "<private \(hash)>"
-    #endif
   }
 }
 
@@ -96,13 +87,13 @@ private struct OptionalWrapper<Wrapped>: CustomLogStringConvertible where Wrappe
 }
 
 extension Optional where Wrapped: CustomLogStringConvertible {
-  package var forLogging: CustomLogStringConvertibleWrapper {
+  @_spi(SourceKitLSP) public var forLogging: CustomLogStringConvertibleWrapper {
     return CustomLogStringConvertibleWrapper(OptionalWrapper(optional: self))
   }
 }
 
 extension Encodable {
-  package var prettyPrintedJSON: String {
+  @_spi(SourceKitLSP) public var prettyPrintedJSON: String {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
     guard let data = try? encoder.encode(self) else {
@@ -116,7 +107,7 @@ extension Encodable {
     return string.replacingOccurrences(of: "\\/", with: "/")
   }
 
-  package var prettyPrintedRedactedJSON: String {
+  @_spi(SourceKitLSP) public var prettyPrintedRedactedJSON: String {
     func redact(subject: Any) -> Any {
       if let subject = subject as? [String: Any] {
         return subject.mapValues { redact(subject: $0) }

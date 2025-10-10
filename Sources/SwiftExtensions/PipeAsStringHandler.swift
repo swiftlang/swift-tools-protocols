@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-package import Foundation
+public import Foundation
 
 /// Gathers data from a stdout or stderr pipe. When it has accumulated a full line, calls the handler to handle the
 /// string.
-package actor PipeAsStringHandler {
+@_spi(SourceKitLSP) public actor PipeAsStringHandler {
   /// Queue on which all data from the pipe will be handled. This allows us to have a
   /// nonisolated `handle` function but ensure that data gets processed in order.
   private let queue = AsyncQueue<Serial>()
@@ -23,7 +23,7 @@ package actor PipeAsStringHandler {
   /// The closure that actually handles
   private let handler: @Sendable (String) -> Void
 
-  package init(handler: @escaping @Sendable (String) -> Void) {
+  @_spi(SourceKitLSP) public init(handler: @escaping @Sendable (String) -> Void) {
     self.handler = handler
   }
 
@@ -49,7 +49,7 @@ package actor PipeAsStringHandler {
     }
   }
 
-  package nonisolated func handleDataFromPipe(_ newData: Data) {
+  @_spi(SourceKitLSP) public nonisolated func handleDataFromPipe(_ newData: Data) {
     queue.async {
       await self.handleDataFromPipeImpl(newData)
     }

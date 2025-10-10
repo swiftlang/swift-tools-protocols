@@ -12,7 +12,7 @@
 
 import Foundation
 
-package final class LoggingScope {
+@_spi(SourceKitLSP) public final class LoggingScope {
   /// The name of the current logging subsystem or `nil` if no logging scope is set.
   @TaskLocal fileprivate static var _subsystem: String?
 
@@ -20,7 +20,7 @@ package final class LoggingScope {
   @TaskLocal fileprivate static var _scope: String?
 
   /// The name of the current logging subsystem.
-  package static var subsystem: String {
+  @_spi(SourceKitLSP) public static var subsystem: String {
     #if SKLOGGING_FOR_PLUGIN
     return _subsystem ?? "org.swift.sourcekit-lsp.plugin"
     #else
@@ -29,7 +29,7 @@ package final class LoggingScope {
   }
 
   /// The name of the current logging scope.
-  package static var scope: String {
+  @_spi(SourceKitLSP) public static var scope: String {
     return _scope ?? "default"
   }
 }
@@ -40,7 +40,7 @@ package final class LoggingScope {
 ///
 /// - Note: Since this stores the logging subsystem in a task-local value, it only works when run inside a task.
 ///   Outside a task, this is a no-op.
-package func withLoggingSubsystemAndScope<Result>(
+@_spi(SourceKitLSP) public func withLoggingSubsystemAndScope<Result>(
   subsystem: String,
   scope: String?,
   _ operation: @Sendable () throws -> Result
@@ -51,7 +51,7 @@ package func withLoggingSubsystemAndScope<Result>(
 }
 
 /// Same as `withLoggingSubsystemAndScope` but allows the operation to be `async`.
-package func withLoggingSubsystemAndScope<Result>(
+@_spi(SourceKitLSP) public func withLoggingSubsystemAndScope<Result>(
   subsystem: String,
   scope: String?,
   @_inheritActorContext _ operation: @Sendable @concurrent () async throws -> Result
@@ -69,7 +69,7 @@ package func withLoggingSubsystemAndScope<Result>(
 ///   works when run inside a task. Outside a task, this is a no-op.
 /// - Warning: Be very careful with the dynamic creation of logging scopes. The logging scope is used as the os_log
 ///   category, os_log only supports 4000 different loggers and thus at most 4000 different scopes must be used.
-package func withLoggingScope<Result>(
+@_spi(SourceKitLSP) public func withLoggingScope<Result>(
   _ scope: String,
   _ operation: () throws -> Result
 ) rethrows -> Result {
@@ -82,7 +82,7 @@ package func withLoggingScope<Result>(
 /// Same as `withLoggingScope` but allows the operation to be `async`.
 ///
 /// - SeeAlso: ``withLoggingScope(_:_:)-6qtga``
-package func withLoggingScope<Result>(
+@_spi(SourceKitLSP) public func withLoggingScope<Result>(
   _ scope: String,
   @_inheritActorContext _ operation: @Sendable @concurrent () async throws -> Result
 ) async rethrows -> Result {
