@@ -12,6 +12,7 @@
 
 import LanguageServerProtocolTransport
 import ToolsProtocolsTestSupport
+import SKLogging
 import XCTest
 
 class ConnectionPerfTests: PerfTestCase {
@@ -19,6 +20,7 @@ class ConnectionPerfTests: PerfTestCase {
   var connection: TestJSONRPCConnection! = nil
 
   override func setUp() {
+    LoggingScope.configureDefaultLoggingSubsystem("org.swift.swift-tools-protocols-tests")
     connection = TestJSONRPCConnection()
   }
 

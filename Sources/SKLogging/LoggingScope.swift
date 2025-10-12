@@ -11,8 +11,13 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
+@_spi(SourceKitLSP) import SwiftExtensions
 
-@_spi(SourceKitLSP) public final class LoggingScope {
+public final class LoggingScope {
+
+  /// The name of the default logging subsystem if no task-local value is set.
+  fileprivate static let defaultSubsystem: ThreadSafeBox<String?> = .init(initialValue: nil)
+
   /// The name of the current logging subsystem or `nil` if no logging scope is set.
   @TaskLocal fileprivate static var _subsystem: String?
 
@@ -21,16 +26,22 @@ import Foundation
 
   /// The name of the current logging subsystem.
   @_spi(SourceKitLSP) public static var subsystem: String {
-    #if SKLOGGING_FOR_PLUGIN
-    return _subsystem ?? "org.swift.sourcekit-lsp.plugin"
-    #else
-    return _subsystem ?? "org.swift.sourcekit-lsp"
-    #endif
+    if let _subsystem {
+      return _subsystem
+    } else if let defaultSubsystem = defaultSubsystem.value {
+      return defaultSubsystem
+    } else {
+      fatalError("SKLogging: default subsystem was not configured before first use")
+    }
   }
 
   /// The name of the current logging scope.
   @_spi(SourceKitLSP) public static var scope: String {
     return _scope ?? "default"
+  }
+
+  public static func configureDefaultLoggingSubsystem(_ subsystem: String) {
+    LoggingScope.defaultSubsystem.withLock { $0 = subsystem }
   }
 }
 

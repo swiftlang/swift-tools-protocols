@@ -72,6 +72,7 @@ var targets: [Target] = [
     name: "LanguageServerProtocolTests",
     dependencies: [
       "LanguageServerProtocol",
+      "SKLogging",
       "ToolsProtocolsTestSupport",
     ],
     swiftSettings: globalSwiftSettings
@@ -95,6 +96,7 @@ var targets: [Target] = [
     name: "LanguageServerProtocolTransportTests",
     dependencies: [
       "LanguageServerProtocolTransport",
+      "SKLogging",
       "ToolsProtocolsTestSupport",
     ],
     swiftSettings: globalSwiftSettings
@@ -119,7 +121,6 @@ var targets: [Target] = [
     ],
     exclude: ["CMakeLists.txt"],
     swiftSettings: globalSwiftSettings + lspLoggingSwiftSettings + [
-      .define("SKLOGGING_FOR_PLUGIN"),
       .unsafeFlags([
         "-module-alias", "SwiftExtensions=_SwiftExtensionsForPlugin",
       ]),

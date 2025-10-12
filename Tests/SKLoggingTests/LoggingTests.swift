@@ -70,6 +70,11 @@ private func assertLogging(
 }
 
 final class LoggingTests: XCTestCase {
+
+  override func setUp() async throws {
+    LoggingScope.configureDefaultLoggingSubsystem("org.swift.swift-tools-protocols-tests")
+  }
+
   func testLoggingFormat() async throws {
     let expectation = self.expectation(description: "message logged")
     // nonisolated(unsafe) because we only have a single call to `logger.log` and that cannot race.
@@ -85,7 +90,7 @@ final class LoggingTests: XCTestCase {
     logger.log(level: .error, "my message")
     try await fulfillmentOfOrThrow(expectation)
     XCTAssert(
-      message.starts(with: "[org.swift.sourcekit-lsp:test] error"),
+      message.starts(with: "[org.swift.swift-tools-protocols-tests:test] error"),
       "Message did not have expected header. Received \n\(message)"
     )
     XCTAssert(message.hasSuffix("\nmy message\n---"), "Message did not have expected body. Received \n\(message)")
