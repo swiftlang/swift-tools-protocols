@@ -13,7 +13,7 @@
 import Foundation
 public import LanguageServerProtocol
 @_spi(SourceKitLSP) import SKLogging
-@_spi(SourceKitLSP) public import SwiftExtensions
+@_spi(SourceKitLSP) public import ToolsProtocolsSwiftExtensions
 
 /// Side structure in which `QueueBasedMessageHandler` can keep track of active requests etc.
 ///

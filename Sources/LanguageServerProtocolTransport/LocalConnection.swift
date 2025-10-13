@@ -14,7 +14,7 @@ import Dispatch
 import Foundation
 public import LanguageServerProtocol
 @_spi(SourceKitLSP) import SKLogging
-@_spi(SourceKitLSP) import SwiftExtensions
+@_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 
 /// A connection between two message handlers in the same process.
 ///

@@ -20,8 +20,8 @@ var products: [Product] = [
   .library(name: "LanguageServerProtocolTransport", targets: ["LanguageServerProtocolTransport"]),
   .library(name: "SKLogging", targets: ["SKLogging"]),
   .library(name: "_SKLoggingForPlugin", targets: ["_SKLoggingForPlugin"]),
-  .library(name: "SwiftExtensions", targets: ["SwiftExtensions"]),
-  .library(name: "_SwiftExtensionsForPlugin", targets: ["_SwiftExtensionsForPlugin"]),
+  .library(name: "ToolsProtocolsSwiftExtensions", targets: ["ToolsProtocolsSwiftExtensions"]),
+  .library(name: "_ToolsProtocolsSwiftExtensionsForPlugin", targets: ["_ToolsProtocolsSwiftExtensionsForPlugin"]),
 ]
 
 var targets: [Target] = [
@@ -86,7 +86,7 @@ var targets: [Target] = [
       "BuildServerProtocol",
       "LanguageServerProtocol",
       "SKLogging",
-      "SwiftExtensions",
+      "ToolsProtocolsSwiftExtensions",
     ],
     exclude: ["CMakeLists.txt"],
     swiftSettings: globalSwiftSettings
@@ -107,7 +107,7 @@ var targets: [Target] = [
   .target(
     name: "SKLogging",
     dependencies: [
-      "SwiftExtensions",
+      "ToolsProtocolsSwiftExtensions",
     ],
     exclude: ["CMakeLists.txt"],
     swiftSettings: globalSwiftSettings + lspLoggingSwiftSettings
@@ -117,12 +117,12 @@ var targets: [Target] = [
   .target(
     name: "_SKLoggingForPlugin",
     dependencies: [
-      "_SwiftExtensionsForPlugin"
+      "_ToolsProtocolsSwiftExtensionsForPlugin"
     ],
     exclude: ["CMakeLists.txt"],
     swiftSettings: globalSwiftSettings + lspLoggingSwiftSettings + [
       .unsafeFlags([
-        "-module-alias", "SwiftExtensions=_SwiftExtensionsForPlugin",
+        "-module-alias", "ToolsProtocolsSwiftExtensions=_ToolsProtocolsSwiftExtensionsForPlugin",
       ]),
     ]
   ),
@@ -144,34 +144,34 @@ var targets: [Target] = [
       "LanguageServerProtocol",
       "LanguageServerProtocolTransport",
       "SKLogging",
-      "SwiftExtensions",
+      "ToolsProtocolsSwiftExtensions",
     ],
     swiftSettings: globalSwiftSettings
   ),
 
-  // MARK: SwiftExtensions
+  // MARK: ToolsProtocolsSwiftExtensions
 
   .target(
-    name: "SwiftExtensions",
+    name: "ToolsProtocolsSwiftExtensions",
     dependencies: ["ToolsProtocolsCAtomics"],
     exclude: ["CMakeLists.txt"],
     swiftSettings: globalSwiftSettings
   ),
 
-  // SourceKit-LSP SPI target. Builds SwiftExtensions with an alternate module name to avoid runtime type collisions.
+  // SourceKit-LSP SPI target. Builds ToolsProtocolsSwiftExtensions with an alternate module name to avoid runtime type collisions.
   .target(
-    name: "_SwiftExtensionsForPlugin",
+    name: "_ToolsProtocolsSwiftExtensionsForPlugin",
     dependencies: ["ToolsProtocolsCAtomics"],
     exclude: ["CMakeLists.txt"],
     swiftSettings: globalSwiftSettings
   ),
 
   .testTarget(
-    name: "SwiftExtensionsTests",
+    name: "ToolsProtocolsSwiftExtensionsTests",
     dependencies: [
       "SKLogging",
       "ToolsProtocolsTestSupport",
-      "SwiftExtensions",
+      "ToolsProtocolsSwiftExtensions",
     ],
     swiftSettings: globalSwiftSettings
   ),

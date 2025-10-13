@@ -12,7 +12,7 @@
 
 public import LanguageServerProtocol
 package import LanguageServerProtocolTransport
-@_spi(SourceKitLSP) import SwiftExtensions
+@_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 import XCTest
 
 package import class Foundation.Pipe

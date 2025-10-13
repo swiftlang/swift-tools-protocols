@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 public import LanguageServerProtocol
-@_spi(SourceKitLSP) import SwiftExtensions
+@_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 
 /// A request and a callback that returns the request's reply
 public final class RequestAndReply<Params: RequestType>: Sendable {
