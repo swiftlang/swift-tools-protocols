@@ -10,12 +10,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-package enum Platform: Equatable, Sendable {
+@_spi(SourceKitLSP) public enum Platform: Equatable, Sendable {
   case darwin
   case linux
   case windows
 
-  package static var current: Platform? {
+  @_spi(SourceKitLSP) public static var current: Platform? {
     #if os(Windows)
     return .windows
     #elseif canImport(Darwin)
@@ -26,7 +26,7 @@ package enum Platform: Equatable, Sendable {
   }
 
   /// The file extension used for a dynamic library on this platform.
-  package var dynamicLibraryExtension: String {
+  @_spi(SourceKitLSP) public var dynamicLibraryExtension: String {
     switch self {
     case .darwin: return ".dylib"
     case .linux: return ".so"
@@ -34,7 +34,7 @@ package enum Platform: Equatable, Sendable {
     }
   }
 
-  package var executableExtension: String {
+  @_spi(SourceKitLSP) public var executableExtension: String {
     switch self {
     case .windows: return ".exe"
     case .linux, .darwin: return ""

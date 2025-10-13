@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-import SKLogging
-import SKTestSupport
-import SwiftExtensions
+@_spi(SourceKitLSP) import SKLogging
+import ToolsProtocolsTestSupport
+@_spi(SourceKitLSP) import SwiftExtensions
 import XCTest
 
 #if os(Windows)
@@ -22,6 +22,10 @@ import Android
 #endif
 
 final class AsyncUtilsTests: XCTestCase {
+  override func setUp() async throws {
+    LoggingScope.configureDefaultLoggingSubsystem("org.swift.swift-tools-protocols-tests")
+  }
+
   func testWithTimeout() async throws {
     let expectation = self.expectation(description: "withTimeout body finished")
     await assertThrowsError(

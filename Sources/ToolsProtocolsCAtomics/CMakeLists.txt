@@ -1,0 +1,4 @@
+add_library(ToolsProtocolsCAtomics INTERFACE)
+target_include_directories(ToolsProtocolsCAtomics INTERFACE "include")
+
+set_property(GLOBAL APPEND PROPERTY SWIFTTOOLSPROTOCOLS_EXPORTS ToolsProtocolsCAtomics)

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16.1)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
-project(SourceKit-LSP
+project(swift-tools-protocols
   LANGUAGES C Swift)
 
 set(CMAKE_Swift_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/swift)
@@ -21,17 +21,8 @@ add_compile_options(
 
 find_package(dispatch QUIET)
 find_package(Foundation QUIET)
-find_package(TSC QUIET)
-find_package(LMDB QUIET)
-find_package(IndexStoreDB QUIET)
-find_package(SwiftPM QUIET)
-find_package(LLBuild QUIET)
-find_package(ArgumentParser CONFIG REQUIRED)
-find_package(SwiftCollections QUIET)
-find_package(SwiftSyntax CONFIG REQUIRED)
-find_package(SwiftASN1 CONFIG REQUIRED)
-find_package(SwiftCrypto CONFIG REQUIRED)
 
 include(SwiftSupport)
 
 add_subdirectory(Sources)
+add_subdirectory(cmake/modules)

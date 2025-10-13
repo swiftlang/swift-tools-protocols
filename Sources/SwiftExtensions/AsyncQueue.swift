@@ -27,15 +27,15 @@ extension Task: AnyTask {
 }
 
 /// A type that is able to track dependencies between tasks.
-package protocol DependencyTracker: Sendable, Hashable {
+public protocol DependencyTracker: Sendable, Hashable {
   /// Whether the task described by `self` needs to finish executing before `other` can start executing.
   func isDependency(of other: Self) -> Bool
 }
 
 /// A dependency tracker where each task depends on every other, i.e. a serial
 /// queue.
-package struct Serial: DependencyTracker {
-  package func isDependency(of other: Serial) -> Bool {
+public struct Serial: DependencyTracker {
+  @_spi(SourceKitLSP) public func isDependency(of other: Serial) -> Bool {
     return true
   }
 }
@@ -76,10 +76,10 @@ private final class PendingTasks<TaskMetadata: Sendable & Hashable>: Sendable {
 }
 
 /// A queue that allows the execution of asynchronous blocks of code.
-package final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
+public final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
   private let pendingTasks: PendingTasks<TaskMetadata> = PendingTasks()
 
-  package init() {}
+  public init() {}
 
   /// Schedule a new closure to be executed on the queue.
   ///
@@ -90,7 +90,7 @@ package final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
   /// finish execution before the barrier is executed and all tasks that are
   /// added later will wait until the barrier finishes execution.
   @discardableResult
-  package func async<Success: Sendable>(
+  @_spi(SourceKitLSP) public func async<Success: Sendable>(
     priority: TaskPriority? = nil,
     metadata: TaskMetadata,
     @_inheritActorContext operation: @escaping @Sendable () async -> Success
@@ -111,7 +111,7 @@ package final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
   ///
   /// - Important: The caller is responsible for handling any errors thrown from
   ///   the operation by awaiting the result of the returned task.
-  package func asyncThrowing<Success: Sendable>(
+  @_spi(SourceKitLSP) public func asyncThrowing<Success: Sendable>(
     priority: TaskPriority? = nil,
     metadata: TaskMetadata,
     @_inheritActorContext operation: @escaping @Sendable () async throws -> Success
@@ -176,7 +176,7 @@ extension AsyncQueue where TaskMetadata == Serial {
   /// Same as ``async(priority:operation:)`` but specialized for serial queues
   /// that don't specify any metadata.
   @discardableResult
-  package func async<Success: Sendable>(
+  public func async<Success: Sendable>(
     priority: TaskPriority? = nil,
     @_inheritActorContext operation: @escaping @Sendable () async -> Success
   ) -> Task<Success, Never> {
@@ -185,7 +185,7 @@ extension AsyncQueue where TaskMetadata == Serial {
 
   /// Same as ``asyncThrowing(priority:metadata:operation:)`` but specialized
   /// for serial queues that don't specify any metadata.
-  package func asyncThrowing<Success: Sendable>(
+  public func asyncThrowing<Success: Sendable>(
     priority: TaskPriority? = nil,
     @_inheritActorContext operation: @escaping @Sendable () async throws -> Success
   ) -> Task<Success, any Error> {

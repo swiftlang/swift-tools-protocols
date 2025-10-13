@@ -1,3 +1,0 @@
-#!/usr/bin/env sh
-
-swift run --package-path "$(dirname $0)/SourceKitLSPDevUtils" sourcekit-lsp-dev-utils "$@"

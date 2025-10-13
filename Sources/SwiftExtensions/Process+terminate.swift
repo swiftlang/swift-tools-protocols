@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-package import Foundation
+public import Foundation
 
 extension Foundation.Process {
   /// If the process has not exited after `duration`, terminate it.
-  package func terminateIfRunning(after duration: Duration, pollInterval: Duration = .milliseconds(5)) async throws {
+  @_spi(SourceKitLSP) public func terminateIfRunning(after duration: Duration, pollInterval: Duration = .milliseconds(5)) async throws {
     for _ in 0..<Int(duration.seconds / pollInterval.seconds) {
       if !self.isRunning {
         break
@@ -27,7 +27,7 @@ extension Foundation.Process {
   }
 
   /// On Posix platforms, send a SIGKILL to the process. On Windows, terminate the process.
-  package func terminateImmediately() {
+  @_spi(SourceKitLSP) public func terminateImmediately() {
     // TODO: We should also terminate all child processes (https://github.com/swiftlang/sourcekit-lsp/issues/2080)
     #if os(Windows)
     self.terminate()

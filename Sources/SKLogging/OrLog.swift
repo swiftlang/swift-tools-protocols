@@ -22,7 +22,7 @@ private func logError(prefix: String, error: Error, level: LogLevel = .error) {
 }
 
 /// Like `try?`, but logs the error on failure.
-package func orLog<R>(
+@_spi(SourceKitLSP) public func orLog<R>(
   _ prefix: @autoclosure () -> String,
   level: LogLevel = .error,
   _ block: () throws -> R?
@@ -38,7 +38,7 @@ package func orLog<R>(
 /// Like  ``orLog(_:level:_:)-66i2z`` but allows execution of an `async` body.
 ///
 /// - SeeAlso: ``orLog(_:level:_:)-66i2z``
-package func orLog<R>(
+@_spi(SourceKitLSP) public func orLog<R>(
   _ prefix: @autoclosure () -> String,
   level: LogLevel = .error,
   _ block: () async throws -> R?

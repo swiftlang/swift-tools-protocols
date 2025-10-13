@@ -153,3 +153,5 @@ set_target_properties(LanguageServerProtocol PROPERTIES
 target_link_libraries(LanguageServerProtocol PUBLIC
   $<$<NOT:$<PLATFORM_ID:Darwin>>:swiftDispatch>
   $<$<NOT:$<PLATFORM_ID:Darwin>>:Foundation>)
+
+set_property(GLOBAL APPEND PROPERTY SWIFTTOOLSPROTOCOLS_EXPORTS LanguageServerProtocol)

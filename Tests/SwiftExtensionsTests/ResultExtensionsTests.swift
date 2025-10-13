@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import SwiftExtensions
+@_spi(SourceKitLSP) import SwiftExtensions
 import XCTest
 
 final class ResultExtensionsTests: XCTestCase {

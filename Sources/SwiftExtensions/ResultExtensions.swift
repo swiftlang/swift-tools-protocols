@@ -13,7 +13,7 @@
 extension Swift.Result {
 
   /// Project out the .success value, or nil.
-  package var success: Success? {
+  @_spi(SourceKitLSP) public var success: Success? {
     switch self {
     case .success(let value):
       return value
@@ -23,7 +23,7 @@ extension Swift.Result {
   }
 
   /// Project out the .failure value, or nil.
-  package var failure: Failure? {
+  @_spi(SourceKitLSP) public var failure: Failure? {
     switch self {
     case .failure(let error):
       return error

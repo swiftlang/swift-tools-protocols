@@ -14,7 +14,7 @@ import RegexBuilder
 import SwiftExtensions
 
 #if canImport(Darwin)
-package import Foundation
+public import Foundation
 #else
 // TODO: @preconcurrency needed because stderr is not sendable on Linux https://github.com/swiftlang/swift/issues/75601
 @preconcurrency package import Foundation
@@ -179,7 +179,7 @@ private func cleanOldLogFilesImpl(logFileDirectory: URL, maxAge: TimeInterval) {
 /// when it does.
 ///
 /// No-op when using OSLog.
-package func setUpGlobalLogFileHandler(logFileDirectory: URL, logFileMaxBytes: Int, logRotateCount: Int) async {
+@_spi(SourceKitLSP) public func setUpGlobalLogFileHandler(logFileDirectory: URL, logFileMaxBytes: Int, logRotateCount: Int) async {
   #if !canImport(os) || SOURCEKIT_LSP_FORCE_NON_DARWIN_LOGGER
   await setUpGlobalLogFileHandlerImpl(
     logFileDirectory: logFileDirectory,
@@ -193,7 +193,7 @@ package func setUpGlobalLogFileHandler(logFileDirectory: URL, logFileMaxBytes: I
 /// haven't been modified within the last hour.
 ///
 /// No-op when using OSLog.
-package func cleanOldLogFiles(logFileDirectory: URL, maxAge: TimeInterval) {
+@_spi(SourceKitLSP) public func cleanOldLogFiles(logFileDirectory: URL, maxAge: TimeInterval) {
   #if !canImport(os) || SOURCEKIT_LSP_FORCE_NON_DARWIN_LOGGER
   cleanOldLogFilesImpl(logFileDirectory: logFileDirectory, maxAge: maxAge)
   #endif

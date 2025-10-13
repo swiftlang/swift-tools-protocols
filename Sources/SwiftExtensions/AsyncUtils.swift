@@ -10,21 +10,21 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+public import Foundation
 
 /// Wrapper around a task that allows multiple clients to depend on the task's value.
 ///
 /// If all of the dependents are cancelled, the underlying task is cancelled as well.
-package actor RefCountedCancellableTask<Success: Sendable> {
-  package let task: Task<Success, Error>
+@_spi(SourceKitLSP) public actor RefCountedCancellableTask<Success: Sendable> {
+  @_spi(SourceKitLSP) public let task: Task<Success, Error>
 
   /// The number of clients that depend on the task's result and that are not cancelled.
   private var refCount: Int = 0
 
   /// Whether the task has been cancelled.
-  package private(set) var isCancelled: Bool = false
+  @_spi(SourceKitLSP) public private(set) var isCancelled: Bool = false
 
-  package init(priority: TaskPriority? = nil, operation: @escaping @Sendable @concurrent () async throws -> Success) {
+  @_spi(SourceKitLSP) public init(priority: TaskPriority? = nil, operation: @escaping @Sendable @concurrent () async throws -> Success) {
     self.task = Task(priority: priority, operation: operation)
   }
 
@@ -38,7 +38,7 @@ package actor RefCountedCancellableTask<Success: Sendable> {
   /// Get the task's value.
   ///
   /// If all callers of `value` are cancelled, the underlying task gets cancelled as well.
-  package var value: Success {
+  @_spi(SourceKitLSP) public var value: Success {
     get async throws {
       if isCancelled {
         throw CancellationError()
@@ -55,13 +55,13 @@ package actor RefCountedCancellableTask<Success: Sendable> {
   }
 
   /// Cancel the task and throw a `CancellationError` to all clients that are awaiting the value.
-  package func cancel() {
+  @_spi(SourceKitLSP) public func cancel() {
     isCancelled = true
     task.cancel()
   }
 }
 
-package extension Task {
+public extension Task {
   /// Awaits the value of the result.
   ///
   /// If the current task is cancelled, this will cancel the subtask as well.
@@ -76,11 +76,11 @@ package extension Task {
   }
 }
 
-package extension Task where Failure == Never {
+extension Task where Failure == Never {
   /// Awaits the value of the result.
   ///
   /// If the current task is cancelled, this will cancel the subtask as well.
-  var valuePropagatingCancellation: Success {
+  public var valuePropagatingCancellation: Success {
     get async {
       await withTaskCancellationHandler {
         return await self.value
@@ -98,7 +98,7 @@ package extension Task where Failure == Never {
 ///
 /// If the task executing `withCancellableCheckedThrowingContinuation` gets
 /// cancelled, `cancel` is invoked with the handle that `operation` provided.
-package func withCancellableCheckedThrowingContinuation<Handle: Sendable, Result>(
+@_spi(SourceKitLSP) public func withCancellableCheckedThrowingContinuation<Handle: Sendable, Result>(
   _ operation: (_ continuation: CheckedContinuation<Result, any Error>) -> Handle,
   cancel: @Sendable (Handle) -> Void
 ) async throws -> Result {
@@ -134,7 +134,7 @@ package func withCancellableCheckedThrowingContinuation<Handle: Sendable, Result
 
 extension Collection where Self: Sendable, Element: Sendable {
   /// Transforms all elements in the collection concurrently and returns the transformed collection.
-  package func concurrentMap<TransformedElement: Sendable>(
+  @_spi(SourceKitLSP) public func concurrentMap<TransformedElement: Sendable>(
     maxConcurrentTasks: Int = ProcessInfo.processInfo.activeProcessorCount,
     _ transform: @escaping @Sendable (Element) async -> TransformedElement
   ) async -> [TransformedElement] {
@@ -167,7 +167,7 @@ extension Collection where Self: Sendable, Element: Sendable {
   }
 
   /// Invoke `body` for every element in the collection and wait for all calls of `body` to finish
-  package func concurrentForEach(_ body: @escaping @Sendable (Element) async -> Void) async {
+  @_spi(SourceKitLSP) public func concurrentForEach(_ body: @escaping @Sendable (Element) async -> Void) async {
     await withTaskGroup(of: Void.self) { taskGroup in
       for element in self {
         taskGroup.addTask {
@@ -178,20 +178,20 @@ extension Collection where Self: Sendable, Element: Sendable {
   }
 }
 
-package struct TimeoutError: Error, CustomStringConvertible {
-  package var description: String { "Timed out" }
+@_spi(SourceKitLSP) public struct TimeoutError: Error, CustomStringConvertible {
+  @_spi(SourceKitLSP) public var description: String { "Timed out" }
 
-  package let handle: TimeoutHandle?
+  @_spi(SourceKitLSP) public let handle: TimeoutHandle?
 
-  package init(handle: TimeoutHandle?) {
+  @_spi(SourceKitLSP) public init(handle: TimeoutHandle?) {
     self.handle = handle
   }
 }
 
-package final class TimeoutHandle: Equatable, Sendable {
-  package init() {}
+@_spi(SourceKitLSP) public final class TimeoutHandle: Equatable, Sendable {
+  @_spi(SourceKitLSP) public init() {}
 
-  static package func == (_ lhs: TimeoutHandle, _ rhs: TimeoutHandle) -> Bool {
+  @_spi(SourceKitLSP) public static func == (_ lhs: TimeoutHandle, _ rhs: TimeoutHandle) -> Bool {
     return lhs === rhs
   }
 }
@@ -202,7 +202,7 @@ package final class TimeoutHandle: Equatable, Sendable {
 ///
 /// If a `handle` is passed in and this `withTimeout` call times out, the thrown `TimeoutError` contains this handle.
 /// This way a caller can identify whether this call to `withTimeout` timed out or if a nested call timed out.
-package func withTimeout<T: Sendable>(
+@_spi(SourceKitLSP) public func withTimeout<T: Sendable>(
   _ duration: Duration,
   handle: TimeoutHandle? = nil,
   _ body: @escaping @Sendable () async throws -> T
@@ -268,7 +268,7 @@ package func withTimeout<T: Sendable>(
 ///
 /// - Important: `body` will not be cancelled when the timeout is received. Use the other overload of `withTimeout` if
 ///   `body` should be cancelled after `timeout`.
-package func withTimeout<T: Sendable>(
+@_spi(SourceKitLSP) public func withTimeout<T: Sendable>(
   _ timeout: Duration,
   body: @escaping @Sendable () async throws -> T,
   resultReceivedAfterTimeout: @escaping @Sendable (_ result: T) async -> Void

@@ -11,12 +11,12 @@
 //===----------------------------------------------------------------------===//
 
 /// A value that is computed on its first access and saved for later retrievals.
-package enum LazyValue<T> {
+@_spi(SourceKitLSP) public enum LazyValue<T> {
   case computed(T)
   case uninitialized
 
   /// If the value has already been computed return it, otherwise compute it using `compute`.
-  package mutating func cachedValueOrCompute(_ compute: () -> T) -> T {
+  @_spi(SourceKitLSP) public mutating func cachedValueOrCompute(_ compute: () -> T) -> T {
     switch self {
     case .computed(let value):
       return value
@@ -27,7 +27,7 @@ package enum LazyValue<T> {
     }
   }
 
-  package mutating func reset() {
+  @_spi(SourceKitLSP) public mutating func reset() {
     self = .uninitialized
   }
 }

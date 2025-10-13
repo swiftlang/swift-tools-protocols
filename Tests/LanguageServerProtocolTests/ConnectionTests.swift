@@ -11,7 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 import LanguageServerProtocol
-import SKTestSupport
+import ToolsProtocolsTestSupport
+import SKLogging
 import XCTest
 
 class ConnectionTests: XCTestCase {
@@ -19,6 +20,7 @@ class ConnectionTests: XCTestCase {
   var connection: TestLocalConnection! = nil
 
   override func setUp() {
+    LoggingScope.configureDefaultLoggingSubsystem("org.swift.swift-tools-protocols-tests")
     connection = TestLocalConnection(allowUnexpectedNotification: false)
   }
 
