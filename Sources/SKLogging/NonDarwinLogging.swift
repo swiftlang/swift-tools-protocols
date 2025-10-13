@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-@_spi(SourceKitLSP) public import SwiftExtensions
+@_spi(SourceKitLSP) public import ToolsProtocolsSwiftExtensions
 
 #if canImport(Darwin)
 import Foundation

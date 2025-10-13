@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 import RegexBuilder
-import SwiftExtensions
+import ToolsProtocolsSwiftExtensions
 
 #if canImport(Darwin)
 public import Foundation

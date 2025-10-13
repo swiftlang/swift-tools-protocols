@@ -13,7 +13,7 @@
 import BuildServerProtocol
 public import LanguageServerProtocol
 @_spi(SourceKitLSP) import SKLogging
-import SwiftExtensions
+import ToolsProtocolsSwiftExtensions
 
 /// A lightweight way of describing tasks that are created from handling BSP
 /// requests or notifications for the purpose of dependency tracking.

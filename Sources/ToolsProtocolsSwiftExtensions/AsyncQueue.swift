@@ -90,7 +90,7 @@ public final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
   /// finish execution before the barrier is executed and all tasks that are
   /// added later will wait until the barrier finishes execution.
   @discardableResult
-  @_spi(SourceKitLSP) public func async<Success: Sendable>(
+ public func async<Success: Sendable>(
     priority: TaskPriority? = nil,
     metadata: TaskMetadata,
     @_inheritActorContext operation: @escaping @Sendable () async -> Success
@@ -111,7 +111,7 @@ public final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
   ///
   /// - Important: The caller is responsible for handling any errors thrown from
   ///   the operation by awaiting the result of the returned task.
-  @_spi(SourceKitLSP) public func asyncThrowing<Success: Sendable>(
+public func asyncThrowing<Success: Sendable>(
     priority: TaskPriority? = nil,
     metadata: TaskMetadata,
     @_inheritActorContext operation: @escaping @Sendable () async throws -> Success

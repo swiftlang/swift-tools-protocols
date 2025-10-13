@@ -12,7 +12,7 @@
 
 @_spi(SourceKitLSP) import SKLogging
 import ToolsProtocolsTestSupport
-@_spi(SourceKitLSP) import SwiftExtensions
+@_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 import XCTest
 
 #if os(Windows)

@@ -14,7 +14,7 @@ public import Dispatch
 public import Foundation
 public import LanguageServerProtocol
 @_spi(SourceKitLSP) import SKLogging
-@_spi(SourceKitLSP) import SwiftExtensions
+@_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 
 #if canImport(Android)
 import Android
