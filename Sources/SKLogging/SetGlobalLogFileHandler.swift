@@ -17,7 +17,7 @@ import ToolsProtocolsSwiftExtensions
 public import Foundation
 #else
 // TODO: @preconcurrency needed because stderr is not sendable on Linux https://github.com/swiftlang/swift/issues/75601
-@preconcurrency package import Foundation
+@preconcurrency public import Foundation
 #endif
 
 #if os(Windows)

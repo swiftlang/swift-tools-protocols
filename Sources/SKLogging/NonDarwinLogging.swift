@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-@_spi(SourceKitLSP) public import ToolsProtocolsSwiftExtensions
+@_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 
 #if canImport(Darwin)
 import Foundation
@@ -23,7 +23,7 @@ import Foundation
 
 @_spi(SourceKitLSP) public enum LogConfig {
   /// The globally set log level
-  @_spi(SourceKitLSP) public static let logLevel = ThreadSafeBox<NonDarwinLogLevel>(
+  private static let _logLevel = ThreadSafeBox<NonDarwinLogLevel>(
     initialValue: {
       if let envVar = ProcessInfo.processInfo.environment["SOURCEKIT_LSP_LOG_LEVEL"],
         let logLevel = NonDarwinLogLevel(envVar)
@@ -38,8 +38,17 @@ import Foundation
     }()
   )
 
+  @_spi(SourceKitLSP) public static var logLevel: NonDarwinLogLevel {
+    get {
+      _logLevel.value
+    }
+    set {
+      _logLevel.value = newValue
+    }
+  }
+
   /// The globally set privacy level
-  @_spi(SourceKitLSP) public static let privacyLevel = ThreadSafeBox<NonDarwinLogPrivacy>(
+  private static let _privacyLevel = ThreadSafeBox<NonDarwinLogPrivacy>(
     initialValue: {
       if let envVar = ProcessInfo.processInfo.environment["SOURCEKIT_LSP_LOG_PRIVACY_LEVEL"],
         let privacyLevel = NonDarwinLogPrivacy(envVar)
@@ -53,6 +62,15 @@ import Foundation
       #endif
     }()
   )
+
+  @_spi(SourceKitLSP) public static var privacyLevel: NonDarwinLogPrivacy {
+    get {
+      _privacyLevel.value
+    }
+    set {
+      _privacyLevel.value = newValue
+    }
+  }
 }
 
 /// A type that is API-compatible to `OSLogType` for all uses within
@@ -302,7 +320,7 @@ private let loggingQueue = AsyncQueue<Serial>()
 /// not available.
 ///
 /// `overrideLogHandler` allows capturing of the logged messages for testing purposes.
-@_spi(SourceKitLSP) public struct NonDarwinLogger: Sendable {
+public struct NonDarwinLogger: Sendable {
   private let subsystem: String
   private let category: String
   private let logLevel: NonDarwinLogLevel
@@ -326,8 +344,8 @@ private let loggingQueue = AsyncQueue<Serial>()
   ) {
     self.subsystem = subsystem
     self.category = category
-    self.logLevel = logLevel ?? LogConfig.logLevel.value
-    self.privacyLevel = privacyLevel ?? LogConfig.privacyLevel.value
+    self.logLevel = logLevel ?? LogConfig.logLevel
+    self.privacyLevel = privacyLevel ?? LogConfig.privacyLevel
     self.overrideLogHandler = overrideLogHandler
   }
 

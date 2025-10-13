@@ -35,7 +35,7 @@ public protocol DependencyTracker: Sendable, Hashable {
 /// A dependency tracker where each task depends on every other, i.e. a serial
 /// queue.
 public struct Serial: DependencyTracker {
-  @_spi(SourceKitLSP) public func isDependency(of other: Serial) -> Bool {
+  public func isDependency(of other: Serial) -> Bool {
     return true
   }
 }
