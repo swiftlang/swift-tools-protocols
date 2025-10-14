@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if canImport(XCTest)
 public import LanguageServerProtocol
 package import LanguageServerProtocolTransport
 @_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
@@ -233,3 +234,4 @@ package struct EchoNotification: NotificationType {
     self.string = string
   }
 }
+#endif
