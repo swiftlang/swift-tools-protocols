@@ -107,7 +107,7 @@ var targets: [Target] = [
   .target(
     name: "SKLogging",
     dependencies: [
-      "ToolsProtocolsSwiftExtensions",
+      "ToolsProtocolsSwiftExtensions"
     ],
     exclude: ["CMakeLists.txt"],
     swiftSettings: globalSwiftSettings + lspLoggingSwiftSettings
@@ -123,7 +123,7 @@ var targets: [Target] = [
     swiftSettings: globalSwiftSettings + lspLoggingSwiftSettings + [
       .unsafeFlags([
         "-module-alias", "ToolsProtocolsSwiftExtensions=_ToolsProtocolsSwiftExtensionsForPlugin",
-      ]),
+      ])
     ]
   ),
 
@@ -178,11 +178,13 @@ var targets: [Target] = [
 
   // MARK: Command plugins
   .plugin(
-      name: "cmake-smoke-test",
-      capability: .command(intent: .custom(
-          verb: "cmake-smoke-test",
-          description: "Build Swift Build using CMake for validation purposes"
-      ))
+    name: "cmake-smoke-test",
+    capability: .command(
+      intent: .custom(
+        verb: "cmake-smoke-test",
+        description: "Build Swift Build using CMake for validation purposes"
+      )
+    )
   ),
 ]
 
@@ -254,7 +256,7 @@ var dependencies: [Package.Dependency] {
 
     return [
       // Not a build dependency. Used so the "Format Source Code" command plugin can be used to format sourcekit-lsp
-      .package(url: "https://github.com/swiftlang/swift-format.git", branch: relatedDependenciesBranch),
+      .package(url: "https://github.com/swiftlang/swift-format.git", branch: relatedDependenciesBranch)
     ]
   }
 }
