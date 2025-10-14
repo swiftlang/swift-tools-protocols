@@ -1,4 +1,4 @@
-# swift-tools-protocols
+ # swift-tools-protocols
 
 `swift-tools-protocols` provides basic model types and a transport implementation for the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) (LSP) and [Build Server Protocol](https://build-server-protocol.github.io) (BSP). 
 
