@@ -14,7 +14,7 @@ public import Foundation
 
 /// An object that can printed for logging and also offers a redacted description
 /// when logging in contexts in which private information shouldn't be captured.
-public protocol CustomLogStringConvertible: CustomStringConvertible, Sendable {
+@_spi(SourceKitLSP) public protocol CustomLogStringConvertible: CustomStringConvertible, Sendable {
   /// A full description of the object.
   var description: String { get }
 
@@ -86,7 +86,7 @@ private struct OptionalWrapper<Wrapped>: CustomLogStringConvertible where Wrappe
   }
 }
 
-extension Optional where Wrapped: CustomLogStringConvertible {
+@_spi(SourceKitLSP) extension Optional where Wrapped: CustomLogStringConvertible {
   @_spi(SourceKitLSP) public var forLogging: CustomLogStringConvertibleWrapper {
     return CustomLogStringConvertibleWrapper(OptionalWrapper(optional: self))
   }
