@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if canImport(XCTest)
 package import XCTest
 
 /// Same as `XCTAssertNoThrow` but executes the trailing closure.
@@ -181,3 +182,4 @@ package nonisolated func fulfillmentOfOrThrow(
     throw ExpectationNotFulfilledError(expectations: expectations)
   }
 }
+#endif

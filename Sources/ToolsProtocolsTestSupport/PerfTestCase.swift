@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if canImport(XCTest)
 public import XCTest
 
 /// Base class for a performance test case in SourceKit-LSP.
@@ -52,3 +53,4 @@ open class PerfTestCase: XCTestCase {
   #endif
 
 }
+#endif

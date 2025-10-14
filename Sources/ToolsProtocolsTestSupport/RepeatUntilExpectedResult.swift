@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if canImport(XCTest)
 import SKLogging
 @_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 import XCTest
@@ -35,3 +36,4 @@ package func repeatUntilExpectedResult(
   }
   XCTFail("Failed to get expected result", file: file, line: line)
 }
+#endif

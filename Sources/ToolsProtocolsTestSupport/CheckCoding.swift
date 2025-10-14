@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if canImport(XCTest)
 import Foundation
 import XCTest
 
@@ -112,3 +113,4 @@ package func checkCoding<T: Codable>(
 
   body(decodedValue)
 }
+#endif
