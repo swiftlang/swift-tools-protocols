@@ -24,7 +24,10 @@ public import Foundation
   /// Whether the task has been cancelled.
   @_spi(SourceKitLSP) public private(set) var isCancelled: Bool = false
 
-  @_spi(SourceKitLSP) public init(priority: TaskPriority? = nil, operation: @escaping @Sendable @concurrent () async throws -> Success) {
+  @_spi(SourceKitLSP) public init(
+    priority: TaskPriority? = nil,
+    operation: @escaping @Sendable @concurrent () async throws -> Success
+  ) {
     self.task = Task(priority: priority, operation: operation)
   }
 

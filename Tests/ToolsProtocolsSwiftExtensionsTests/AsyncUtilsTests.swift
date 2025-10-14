@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 @_spi(SourceKitLSP) import SKLogging
-import ToolsProtocolsTestSupport
 @_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
+import ToolsProtocolsTestSupport
 import XCTest
 
 #if os(Windows)

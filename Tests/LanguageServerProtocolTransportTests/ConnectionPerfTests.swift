@@ -11,8 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 import LanguageServerProtocolTransport
-import ToolsProtocolsTestSupport
 import SKLogging
+import ToolsProtocolsTestSupport
 import XCTest
 
 class ConnectionPerfTests: PerfTestCase {

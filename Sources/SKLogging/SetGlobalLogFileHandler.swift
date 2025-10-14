@@ -179,7 +179,11 @@ private func cleanOldLogFilesImpl(logFileDirectory: URL, maxAge: TimeInterval) {
 /// when it does.
 ///
 /// No-op when using OSLog.
-@_spi(SourceKitLSP) public func setUpGlobalLogFileHandler(logFileDirectory: URL, logFileMaxBytes: Int, logRotateCount: Int) async {
+@_spi(SourceKitLSP) public func setUpGlobalLogFileHandler(
+  logFileDirectory: URL,
+  logFileMaxBytes: Int,
+  logRotateCount: Int
+) async {
   #if !canImport(os) || SOURCEKIT_LSP_FORCE_NON_DARWIN_LOGGER
   await setUpGlobalLogFileHandlerImpl(
     logFileDirectory: logFileDirectory,

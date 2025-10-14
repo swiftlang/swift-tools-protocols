@@ -184,7 +184,10 @@ import Foundation
     }
   }
 
-  @_spi(SourceKitLSP) public mutating func appendInterpolation(_ message: StaticString, privacy: NonDarwinLogPrivacy = .public) {
+  @_spi(SourceKitLSP) public mutating func appendInterpolation(
+    _ message: StaticString,
+    privacy: NonDarwinLogPrivacy = .public
+  ) {
     append(description: message.description, redactedDescription: "<private>", privacy: privacy)
   }
 
@@ -214,7 +217,8 @@ import Foundation
     }
   }
 
-  @_spi(SourceKitLSP) public mutating func appendInterpolation(_ type: Any.Type, privacy: NonDarwinLogPrivacy = .public) {
+  @_spi(SourceKitLSP) public mutating func appendInterpolation(_ type: Any.Type, privacy: NonDarwinLogPrivacy = .public)
+  {
     append(description: String(reflecting: type), redactedDescription: "<private>", privacy: privacy)
   }
 
@@ -225,7 +229,8 @@ import Foundation
     append(description: String(describing: message), redactedDescription: "<private>", privacy: privacy)
   }
 
-  @_spi(SourceKitLSP) public mutating func appendInterpolation(_ message: Bool, privacy: NonDarwinLogPrivacy = .public) {
+  @_spi(SourceKitLSP) public mutating func appendInterpolation(_ message: Bool, privacy: NonDarwinLogPrivacy = .public)
+  {
     append(description: message.description, redactedDescription: "<private>", privacy: privacy)
   }
 
@@ -253,7 +258,8 @@ import Foundation
 /// sourcekit-lsp.
 ///
 /// This is used on platforms that don't have OSLog.
-@_spi(SourceKitLSP) public struct NonDarwinLogMessage: ExpressibleByStringInterpolation, ExpressibleByStringLiteral, Sendable {
+@_spi(SourceKitLSP)
+public struct NonDarwinLogMessage: ExpressibleByStringInterpolation, ExpressibleByStringLiteral, Sendable {
   fileprivate let value: NonDarwinLogInterpolation
 
   @_spi(SourceKitLSP) public init(stringInterpolation: NonDarwinLogInterpolation) {
@@ -435,7 +441,11 @@ private let nextSignpostID = AtomicUInt32(initialValue: 0)
     return NonDarwinSignpostIntervalState(id: id)
   }
 
-  @_spi(SourceKitLSP) public func emitEvent(_ name: StaticString, id: NonDarwinSignpostID, _ message: NonDarwinLogMessage = "") {
+  @_spi(SourceKitLSP) public func emitEvent(
+    _ name: StaticString,
+    id: NonDarwinSignpostID,
+    _ message: NonDarwinLogMessage = ""
+  ) {
     logger.log(level: .debug, "Signpost \(id.id) event: \(name) - \(message.value.string(for: logger.privacyLevel))")
   }
 
