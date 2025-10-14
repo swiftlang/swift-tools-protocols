@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-public import Foundation
+package import Foundation
 
 #if os(Windows)
 import WinSDK
@@ -37,7 +37,7 @@ extension URL {
   ///   path by stripping away `private` prefixes. Since sourcekitd is not performing this standardization, using
   ///   `resolvingSymlinksInPath` can lead to slightly mismatched URLs between the sourcekit-lsp response and the test
   ///   assertion.
-  @_spi(SourceKitLSP) public var realpath: URL {
+  package var realpath: URL {
     get throws {
       #if canImport(Darwin)
       return try self.filePath.withCString { path in
@@ -63,7 +63,7 @@ extension URL {
   /// - It throws an error when called on a non-file URL.
   ///
   /// `filePath` should generally be preferred over `path` when dealing with file URLs.
-  @_spi(SourceKitLSP) public var filePath: String {
+  package var filePath: String {
     get throws {
       guard self.isFileURL else {
         throw FilePathError.noFileURL(self)
@@ -89,7 +89,7 @@ extension URL {
 
   /// Assuming this URL is a file URL, checks if it looks like a root path. This is a string check, ie. the return
   /// value for a path of `"/foo/.."` would be `false`. An error will be thrown is this is a non-file URL.
-  @_spi(SourceKitLSP) public var isRoot: Bool {
+  package var isRoot: Bool {
     get throws {
       let checkPath = try filePath
       #if os(Windows)
@@ -101,7 +101,7 @@ extension URL {
   }
 
   /// Returns true if the path of `self` starts with the path in `other`.
-  @_spi(SourceKitLSP) public func isDescendant(of other: URL) -> Bool {
+  package func isDescendant(of other: URL) -> Bool {
     return self.pathComponents.dropLast().starts(with: other.pathComponents)
   }
 }

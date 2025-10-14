@@ -10,11 +10,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-public import Foundation
+package import Foundation
 
 extension FileManager {
   /// Same as `fileExists(atPath:)` but takes a `URL` instead of a `String`.
-  @_spi(SourceKitLSP) public func fileExists(at url: URL) -> Bool {
+  package func fileExists(at url: URL) -> Bool {
     guard let filePath = try? url.filePath else {
       return false
     }
@@ -22,14 +22,14 @@ extension FileManager {
   }
 
   /// Returns `true` if an entry exists in the file system at the given URL and that entry is a directory.
-  @_spi(SourceKitLSP) public func isDirectory(at url: URL) -> Bool {
+  package func isDirectory(at url: URL) -> Bool {
     var isDirectory: ObjCBool = false
     return self.fileExists(atPath: url.path, isDirectory: &isDirectory) && isDirectory.boolValue
   }
 
   /// Returns `true` if an entry exists in the file system at the given URL and that entry is a file, ie. not a
   /// directory.
-  @_spi(SourceKitLSP) public func isFile(at url: URL) -> Bool {
+  package func isFile(at url: URL) -> Bool {
     var isDirectory: ObjCBool = false
     return self.fileExists(atPath: url.path, isDirectory: &isDirectory) && !isDirectory.boolValue
   }
