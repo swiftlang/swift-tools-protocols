@@ -38,7 +38,7 @@ private let notificationTypes: [NotificationType.Type] = [
 ]
 
 extension MessageRegistry {
-  public var bspProtocol: MessageRegistry {
+  public static var bspProtocol: MessageRegistry {
     MessageRegistry(requests: requestTypes, notifications: notificationTypes)
   }
 }
