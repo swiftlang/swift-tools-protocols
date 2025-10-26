@@ -1,6 +1,7 @@
 add_library(LanguageServerProtocolTransport STATIC
   BuildServerMessageDependencyTracker.swift
   DisableSigpipe.swift
+  DocumentURI+CustomLogStringConvertible.swift
   JSONRPCConnection.swift
   LocalConnection.swift
   LoggableMessageTypes.swift
