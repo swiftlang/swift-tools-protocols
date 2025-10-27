@@ -8,7 +8,7 @@ set(sources
   SetGlobalLogFileHandler.swift
   SplitLogMessage.swift)
 
-add_library(SKLogging STATIC ${sources})
+add_library(SKLogging ${sources})
 set_target_properties(SKLogging PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_Swift_MODULE_DIRECTORY})
 target_link_libraries(SKLogging PRIVATE
@@ -16,7 +16,7 @@ target_link_libraries(SKLogging PRIVATE
 target_link_libraries(SKLogging PUBLIC
   ToolsProtocolsSwiftExtensions)
 
-add_library(_SKLoggingForPlugin STATIC ${sources})
+add_library(_SKLoggingForPlugin ${sources})
 set_target_properties(_SKLoggingForPlugin PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_Swift_MODULE_DIRECTORY})
 target_compile_options(_SKLoggingForPlugin PRIVATE

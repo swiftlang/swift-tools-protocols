@@ -1,4 +1,4 @@
-add_library(LanguageServerProtocol STATIC
+add_library(LanguageServerProtocol
   Connection.swift
   CustomCodable.swift
   Error.swift

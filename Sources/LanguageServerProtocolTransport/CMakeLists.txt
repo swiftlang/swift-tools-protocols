@@ -1,4 +1,4 @@
-add_library(LanguageServerProtocolTransport STATIC
+add_library(LanguageServerProtocolTransport
   BuildServerMessageDependencyTracker.swift
   DisableSigpipe.swift
   DocumentURI+CustomLogStringConvertible.swift

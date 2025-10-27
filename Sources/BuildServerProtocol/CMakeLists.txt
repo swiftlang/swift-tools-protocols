@@ -1,4 +1,4 @@
-add_library(BuildServerProtocol STATIC
+add_library(BuildServerProtocol
   Messages.swift
 
   Messages/BuildShutdownRequest.swift
