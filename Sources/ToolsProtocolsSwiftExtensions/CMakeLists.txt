@@ -12,7 +12,7 @@ set(sources
   URLExtensions.swift
 )
 
-add_library(ToolsProtocolsSwiftExtensions STATIC ${sources})
+add_library(ToolsProtocolsSwiftExtensions ${sources})
 set_target_properties(ToolsProtocolsSwiftExtensions PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_Swift_MODULE_DIRECTORY})
 target_link_libraries(ToolsProtocolsSwiftExtensions PUBLIC
@@ -20,7 +20,7 @@ target_link_libraries(ToolsProtocolsSwiftExtensions PUBLIC
 target_link_libraries(ToolsProtocolsSwiftExtensions PRIVATE
   $<$<NOT:$<PLATFORM_ID:Darwin>>:Foundation>)
 
-add_library(_ToolsProtocolsSwiftExtensionsForPlugin STATIC ${sources})
+add_library(_ToolsProtocolsSwiftExtensionsForPlugin ${sources})
 set_target_properties(_ToolsProtocolsSwiftExtensionsForPlugin PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_Swift_MODULE_DIRECTORY})
 target_link_libraries(_ToolsProtocolsSwiftExtensionsForPlugin PUBLIC
