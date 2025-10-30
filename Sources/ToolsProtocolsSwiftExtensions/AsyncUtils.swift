@@ -205,7 +205,7 @@ extension Collection where Self: Sendable, Element: Sendable {
 ///
 /// If a `handle` is passed in and this `withTimeout` call times out, the thrown `TimeoutError` contains this handle.
 /// This way a caller can identify whether this call to `withTimeout` timed out or if a nested call timed out.
-@_spi(SourceKitLSP) public func withTimeout<T: Sendable>(
+package func withTimeout<T: Sendable>(
   _ duration: Duration,
   handle: TimeoutHandle? = nil,
   _ body: @escaping @Sendable () async throws -> T
@@ -271,7 +271,7 @@ extension Collection where Self: Sendable, Element: Sendable {
 ///
 /// - Important: `body` will not be cancelled when the timeout is received. Use the other overload of `withTimeout` if
 ///   `body` should be cancelled after `timeout`.
-@_spi(SourceKitLSP) public func withTimeout<T: Sendable>(
+package func withTimeout<T: Sendable>(
   _ timeout: Duration,
   body: @escaping @Sendable () async throws -> T,
   resultReceivedAfterTimeout: @escaping @Sendable (_ result: T) async -> Void
