@@ -21,3 +21,8 @@ target_link_libraries(LanguageServerProtocolTransport PRIVATE
   $<$<NOT:$<PLATFORM_ID:Darwin>>:Foundation>)
 
 set_property(GLOBAL APPEND PROPERTY SWIFTTOOLSPROTOCOLS_EXPORTS LanguageServerProtocolTransport)
+
+install(TARGETS LanguageServerProtocolTransport
+  ARCHIVE DESTINATION "${${PROJECT_NAME}_INSTALL_LIBDIR}"
+  LIBRARY DESTINATION "${${PROJECT_NAME}_INSTALL_LIBDIR}"
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
