@@ -31,7 +31,9 @@ public final class LoggingScope {
     } else if let defaultSubsystem = defaultSubsystem.value {
       return defaultSubsystem
     } else {
-      fatalError("SKLogging: default subsystem was not configured before first use")
+      Logger(subsystem: "org.swift.sklogging", category: "configuration")
+        .log(level: .fault, "default logging subsystem was not configured before first use")
+      return "org.swift"
     }
   }
 
