@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <stdlib.h>
+#include <stdatomic.h>
 
 typedef struct {
   _Atomic(uint32_t) value;
@@ -30,6 +31,10 @@ static inline CAtomicUInt32 *_Nonnull atomic_uint32_create(uint32_t initialValue
 
 static inline uint32_t atomic_uint32_get(CAtomicUInt32 *_Nonnull atomic) {
   return atomic->value;
+}
+
+static inline uint32_t atomic_uint32_get_and_set(CAtomicUInt32 *_Nonnull atomic, uint32_t newValue) {
+  return __c11_atomic_exchange(&atomic->value, newValue, __ATOMIC_SEQ_CST);
 }
 
 static inline void atomic_uint32_set(CAtomicUInt32 *_Nonnull atomic, uint32_t newValue) {
