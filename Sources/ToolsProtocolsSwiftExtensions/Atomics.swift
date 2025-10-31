@@ -32,6 +32,11 @@ import ToolsProtocolsCAtomics
       atomic_uint32_set(atomic, newValue ? 1 : 0)
     }
   }
+
+  /// Sets the boolean to the new value and returns the previous value.
+  @_spi(SourceKitLSP) public func setAndGet(newValue: Bool) -> Bool {
+    return atomic_uint32_get_and_set(atomic, newValue ? 1 : 0) != 0
+  }
 }
 
 @_spi(SourceKitLSP) public final class AtomicUInt8: Sendable {

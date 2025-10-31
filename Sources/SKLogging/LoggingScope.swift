@@ -16,7 +16,11 @@ import Foundation
 public final class LoggingScope {
 
   /// The name of the default logging subsystem if no task-local value is set.
-  fileprivate static let defaultSubsystem: ThreadSafeBox<String?> = .init(initialValue: nil)
+  private static let defaultSubsystem = ThreadSafeBox<String?>(initialValue: nil)
+
+  /// Whether we have logged a fault that `subsystem` has been accessed without calling
+  /// `configureDefaultLoggingSubsystem` first.
+  private static let hasLoggedNoSubsystemConfiguredFault = AtomicBool(initialValue: false)
 
   /// The name of the current logging subsystem or `nil` if no logging scope is set.
   @TaskLocal fileprivate static var _subsystem: String?
@@ -31,9 +35,16 @@ public final class LoggingScope {
     } else if let defaultSubsystem = defaultSubsystem.value {
       return defaultSubsystem
     } else {
-      Logger(subsystem: "org.swift.sklogging", category: "configuration")
-        .log(level: .fault, "default logging subsystem was not configured before first use")
-      return "org.swift"
+      if !hasLoggedNoSubsystemConfiguredFault.setAndGet(newValue: true) {
+        Logger(subsystem: "default", category: "sklogging")
+          .fault(
+            """
+            Default logging subsystem was not configured before first use of SKLogging. \
+            Ensure that configureDefaultLoggingSubsystem is called before the first log call.
+            """
+          )
+      }
+      return "default"
     }
   }
 
@@ -42,8 +53,16 @@ public final class LoggingScope {
     return _scope ?? "default"
   }
 
+  /// Set the logging subsystem that is used task local subsystem is set using `withLoggingSubsystemAndScope`.
+  ///
+  /// Must be called before the first log call.
   public static func configureDefaultLoggingSubsystem(_ subsystem: String) {
-    LoggingScope.defaultSubsystem.withLock { $0 = subsystem }
+    LoggingScope.defaultSubsystem.withLock { defaultSubsystem in
+      if let defaultSubsystem, defaultSubsystem != subsystem {
+        logger.log("Changing default log subsystem from \(defaultSubsystem) to \(subsystem)")
+      }
+      defaultSubsystem = subsystem
+    }
   }
 }
 
