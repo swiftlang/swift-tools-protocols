@@ -15,7 +15,10 @@
 /// by only including the `range` instead of full `location` with the expectation being that
 /// it is only returned as part of a textDocument/* request such as textDocument/codelens
 public struct TextDocumentPlayground: ResponseType, Equatable, LSPAnyCodable {
-  /// Unique identifier for the `Playground`. Client can run the playground by executing `swift play <id>`.
+  /// Unique identifier for the `Playground` with the format `<target>/<filename>:<line>:[column]` where `target`
+  /// corresponds to the Swift package's target where the playground is defined, `filename` is the basename of the file
+  /// (not entire relative path), and `column` is optional only required if multiple playgrounds are defined on the same
+  /// line. Client can run the playground by executing `swift play <id>`.
   ///
   /// This property is always present whether the `Playground` has a `label` or not.
   ///
