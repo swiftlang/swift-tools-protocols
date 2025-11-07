@@ -137,9 +137,11 @@ extension Task where Failure == Never {
 
 extension Collection where Self: Sendable, Element: Sendable {
   /// Transforms all elements in the collection concurrently and returns the transformed collection.
+  // Workaround formatter issue: https://github.com/swiftlang/swift-format/issues/1081
+  // swift-format-ignore
   @_spi(SourceKitLSP) public func concurrentMap<TransformedElement: Sendable>(
     maxConcurrentTasks: Int = ProcessInfo.processInfo.activeProcessorCount,
-    _ transform: @escaping @Sendable (Element) async -> TransformedElement
+    _ transform: nonisolated(nonsending) @escaping @Sendable (Element) async -> TransformedElement
   ) async -> [TransformedElement] {
     let indexedResults = await withTaskGroup(of: (index: Int, element: TransformedElement).self) { taskGroup in
       var indexedResults: [(index: Int, element: TransformedElement)] = []
@@ -170,7 +172,9 @@ extension Collection where Self: Sendable, Element: Sendable {
   }
 
   /// Invoke `body` for every element in the collection and wait for all calls of `body` to finish
-  @_spi(SourceKitLSP) public func concurrentForEach(_ body: @escaping @Sendable (Element) async -> Void) async {
+  // Workaround formatter issue: https://github.com/swiftlang/swift-format/issues/1081
+  // swift-format-ignore
+  @_spi(SourceKitLSP) public func concurrentForEach(_ body: nonisolated(nonsending) @escaping @Sendable (Element) async -> Void) async {
     await withTaskGroup(of: Void.self) { taskGroup in
       for element in self {
         taskGroup.addTask {
