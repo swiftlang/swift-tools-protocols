@@ -16,10 +16,12 @@
 /// `pollingInterval`.
 /// The function assumes that the original priority of the task is `initialPriority`. If the task priority changed
 /// compared to `initialPriority`, the `taskPriorityChanged` will be called.
+// Workaround formatter issue: https://github.com/swiftlang/swift-format/issues/1081
+// swift-format-ignore
 @_spi(SourceKitLSP) public func withTaskPriorityChangedHandler<T: Sendable>(
   initialPriority: TaskPriority = Task.currentPriority,
   pollingInterval: Duration = .seconds(0.1),
-  @_inheritActorContext operation: @escaping @Sendable () async throws -> T,
+  @_inheritActorContext operation: nonisolated(nonsending) @escaping @Sendable () async throws -> T,
   taskPriorityChanged: @escaping @Sendable () -> Void
 ) async throws -> T {
   let lastPriority = ThreadSafeBox(initialValue: initialPriority)

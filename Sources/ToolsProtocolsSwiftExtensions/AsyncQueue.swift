@@ -89,11 +89,13 @@ public final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
   /// If this is a barrier, all previously scheduled tasks are guaranteed to
   /// finish execution before the barrier is executed and all tasks that are
   /// added later will wait until the barrier finishes execution.
+  // Workaround formatter issue: https://github.com/swiftlang/swift-format/issues/1081
+  // swift-format-ignore
   @discardableResult
   public func async<Success: Sendable>(
     priority: TaskPriority? = nil,
     metadata: TaskMetadata,
-    @_inheritActorContext operation: @escaping @Sendable () async -> Success
+    @_inheritActorContext operation: nonisolated(nonsending) @escaping @Sendable () async -> Success
   ) -> Task<Success, Never> {
     let throwingTask = asyncThrowing(priority: priority, metadata: metadata, operation: operation)
     return Task(priority: priority) {
@@ -111,10 +113,12 @@ public final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
   ///
   /// - Important: The caller is responsible for handling any errors thrown from
   ///   the operation by awaiting the result of the returned task.
+  // Workaround formatter issue: https://github.com/swiftlang/swift-format/issues/1081
+  // swift-format-ignore
   public func asyncThrowing<Success: Sendable>(
     priority: TaskPriority? = nil,
     metadata: TaskMetadata,
-    @_inheritActorContext operation: @escaping @Sendable () async throws -> Success
+    @_inheritActorContext operation: nonisolated(nonsending) @escaping @Sendable () async throws -> Success
   ) -> Task<Success, any Error> {
     let id = UUID()
 
@@ -175,19 +179,23 @@ public final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
 extension AsyncQueue where TaskMetadata == Serial {
   /// Same as ``async(priority:operation:)`` but specialized for serial queues
   /// that don't specify any metadata.
+  // Workaround formatter issue: https://github.com/swiftlang/swift-format/issues/1081
+  // swift-format-ignore
   @discardableResult
   public func async<Success: Sendable>(
     priority: TaskPriority? = nil,
-    @_inheritActorContext operation: @escaping @Sendable () async -> Success
+    @_inheritActorContext operation: nonisolated(nonsending) @escaping @Sendable () async -> Success
   ) -> Task<Success, Never> {
     return self.async(priority: priority, metadata: Serial(), operation: operation)
   }
 
   /// Same as ``asyncThrowing(priority:metadata:operation:)`` but specialized
   /// for serial queues that don't specify any metadata.
+  // Workaround formatter issue: https://github.com/swiftlang/swift-format/issues/1081
+  // swift-format-ignore
   public func asyncThrowing<Success: Sendable>(
     priority: TaskPriority? = nil,
-    @_inheritActorContext operation: @escaping @Sendable () async throws -> Success
+    @_inheritActorContext operation: nonisolated(nonsending) @escaping @Sendable () async throws -> Success
   ) -> Task<Success, any Error> {
     return self.asyncThrowing(priority: priority, metadata: Serial(), operation: operation)
   }

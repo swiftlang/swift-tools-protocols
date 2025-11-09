@@ -284,9 +284,11 @@ public final class JSONRPCConnection: Connection {
   /// - parameter receiveHandler: The message handler to invoke for requests received on the `inFD`.
   ///
   /// - Important: `start` must be called before sending any data over the `JSONRPCConnection`.
+  // Workaround formatter issue: https://github.com/swiftlang/swift-format/issues/1081
+  // swift-format-ignore
   public func start(
     receiveHandler: MessageHandler,
-    closeHandler: @escaping @Sendable () async -> Void = {}
+    closeHandler: nonisolated(nonsending) @escaping @Sendable () async -> Void = {}
   ) {
     queue.sync {
       precondition(state == .created)
