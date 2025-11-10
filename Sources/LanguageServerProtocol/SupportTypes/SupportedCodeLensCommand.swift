@@ -26,4 +26,7 @@ public struct SupportedCodeLensCommand: Codable, Hashable, RawRepresentable, Sen
 
   /// Lens to debug the application
   public static let debug: Self = Self(rawValue: "swift.debug")
+
+  /// Lens to run the playground
+  public static let play: Self = Self(rawValue: "swift.play")
 }

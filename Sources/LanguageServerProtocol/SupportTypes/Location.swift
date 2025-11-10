@@ -13,7 +13,9 @@
 /// Range within a particular document.
 ///
 /// For a location where the document is implied, use `Position` or `Range<Position>`.
-public struct Location: ResponseType, Hashable, Codable, CustomDebugStringConvertible, Comparable, Sendable {
+public struct Location: ResponseType, Hashable, Codable, CustomDebugStringConvertible, Comparable, Sendable,
+  LSPAnyCodable
+{
   public static func < (lhs: Location, rhs: Location) -> Bool {
     if lhs.uri != rhs.uri {
       return lhs.uri.stringValue < rhs.uri.stringValue
@@ -34,7 +36,27 @@ public struct Location: ResponseType, Hashable, Codable, CustomDebugStringConver
     self._range = CustomCodable<PositionRange>(wrappedValue: range)
   }
 
+  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
+    guard
+      case .string(let uriString) = dictionary["uri"],
+      case .dictionary(let rangeDict) = dictionary["range"],
+      let uri = try? DocumentURI(string: uriString),
+      let range = Range<Position>(fromLSPDictionary: rangeDict)
+    else {
+      return nil
+    }
+    self.uri = uri
+    self._range = CustomCodable<PositionRange>(wrappedValue: range)
+  }
+
   public var debugDescription: String {
     return "\(uri):\(range.lowerBound)-\(range.upperBound)"
+  }
+
+  public func encodeToLSPAny() -> LSPAny {
+    return .dictionary([
+      "uri": .string(uri.stringValue),
+      "range": range.encodeToLSPAny(),
+    ])
   }
 }
