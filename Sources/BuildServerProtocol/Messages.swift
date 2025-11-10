@@ -45,3 +45,6 @@ extension MessageRegistry {
     MessageRegistry(requests: requestTypes, notifications: notificationTypes)
   }
 }
+
+@available(*, deprecated, message: "use MessageRegistry.bspProtocol instead")
+public let bspRegistry = MessageRegistry(requests: requestTypes, notifications: notificationTypes)
