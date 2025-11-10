@@ -94,7 +94,7 @@ public struct SourceItem: Codable, Hashable, Sendable {
   }
 }
 
-public enum SourceItemKind: Int, Codable, Hashable, Sendable {
+@frozen public enum SourceItemKind: Int, Codable, Hashable, Sendable {
   /// The source item references a normal file.
   case file = 1
 
@@ -120,7 +120,7 @@ public struct SourceItemDataKind: RawRepresentable, Codable, Hashable, Sendable 
 
 /// **(BSP Extension)**
 
-public enum SourceKitSourceItemKind: String, Codable {
+/*@nonexhaustive*/ public enum SourceKitSourceItemKind: String, Codable {
   /// A source file that belongs to the target
   case source = "source"
 

@@ -53,7 +53,7 @@ public struct BuildTargetEvent: Codable, Hashable, Sendable {
   }
 }
 
-public enum BuildTargetEventKind: Int, Codable, Hashable, Sendable {
+@frozen public enum BuildTargetEventKind: Int, Codable, Hashable, Sendable {
   /// The build target is new.
   case created = 1
 

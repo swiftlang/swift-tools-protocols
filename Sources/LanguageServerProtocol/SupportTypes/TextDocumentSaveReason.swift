@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-public enum TextDocumentSaveReason: Int, Codable, Hashable, Sendable {
+@frozen public enum TextDocumentSaveReason: Int, Codable, Hashable, Sendable {
 
   case manual = 1
 

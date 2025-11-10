@@ -31,7 +31,7 @@ public struct NotebookDocumentFilter: Codable, Hashable, Sendable {
 /// A notebook cell text document filter denotes a cell text
 /// document by different properties.
 public struct NotebookCellTextDocumentFilter: Codable, Hashable, Sendable {
-  public enum NotebookFilter: Codable, Hashable, Sendable {
+  @frozen public enum NotebookFilter: Codable, Hashable, Sendable {
     case string(String)
     case notebookDocumentFilter(NotebookDocumentFilter)
 

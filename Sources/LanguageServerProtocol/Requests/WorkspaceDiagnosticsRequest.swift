@@ -159,7 +159,7 @@ public struct WorkspaceUnchangedDocumentDiagnosticReport: Codable, Hashable, Sen
 }
 
 /// A workspace diagnostic document report.
-public enum WorkspaceDocumentDiagnosticReport: Codable, Hashable, Sendable {
+@frozen public enum WorkspaceDocumentDiagnosticReport: Codable, Hashable, Sendable {
   case full(WorkspaceFullDocumentDiagnosticReport)
   case unchanged(WorkspaceUnchangedDocumentDiagnosticReport)
 

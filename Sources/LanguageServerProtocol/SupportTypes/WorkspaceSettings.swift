@@ -13,7 +13,7 @@
 /// The `settings` field of a `workspace/didChangeConfiguration`.
 ///
 /// This is typed as `Any` in the protocol, and this enum contains the formats we support.
-public enum WorkspaceSettingsChange: Codable, Hashable, Sendable {
+/*@nonexhaustive*/ public enum WorkspaceSettingsChange: Codable, Hashable, Sendable {
 
   case clangd(ClangWorkspaceSettings)
   case unknown(LSPAny)

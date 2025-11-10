@@ -44,7 +44,7 @@ public struct LogMessageNotification: LSPNotification, Hashable {
   }
 }
 
-public enum StructuredLogKind: Codable, Hashable, Sendable {
+@frozen public enum StructuredLogKind: Codable, Hashable, Sendable {
   case begin(StructuredLogBegin)
   case report(StructuredLogReport)
   case end(StructuredLogEnd)

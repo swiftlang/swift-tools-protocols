@@ -12,7 +12,7 @@
 
 import LanguageServerProtocol
 
-public enum MessageType: Int, Sendable, Codable {
+@frozen public enum MessageType: Int, Sendable, Codable {
   /// An error message.
   case error = 1
 

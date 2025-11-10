@@ -17,7 +17,7 @@ import ToolsProtocolsSwiftExtensions
 
 /// A lightweight way of describing tasks that are created from handling BSP
 /// requests or notifications for the purpose of dependency tracking.
-public enum BuildServerMessageDependencyTracker: QueueBasedMessageHandlerDependencyTracker {
+/*@nonexhaustive*/ public enum BuildServerMessageDependencyTracker: QueueBasedMessageHandlerDependencyTracker {
   /// A task that modifies some state. It is a barrier for all requests that read state.
   case stateChange
 

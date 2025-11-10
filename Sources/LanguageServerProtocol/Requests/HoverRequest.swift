@@ -55,12 +55,12 @@ public struct HoverResponse: ResponseType, Hashable {
   }
 }
 
-public enum HoverResponseContents: Hashable, Sendable {
+@frozen public enum HoverResponseContents: Hashable, Sendable {
   case markedStrings([MarkedString])
   case markupContent(MarkupContent)
 }
 
-public enum MarkedString: Hashable {
+@frozen public enum MarkedString: Hashable {
   private struct MarkdownCodeBlock: Codable {
     let language: String
     let value: String

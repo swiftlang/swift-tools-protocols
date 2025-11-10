@@ -14,7 +14,7 @@
 ///
 /// For an edit where the document is implied, use `TextEdit`.
 public struct TextDocumentEdit: Hashable, Codable, Sendable {
-  public enum Edit: Codable, Hashable, Sendable {
+  @frozen public enum Edit: Codable, Hashable, Sendable {
     case textEdit(TextEdit)
     case annotatedTextEdit(AnnotatedTextEdit)
 

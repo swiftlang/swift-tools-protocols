@@ -42,7 +42,7 @@ public struct CompletionItemTag: RawRepresentable, Codable, Hashable, Sendable {
   public static let deprecated = CompletionItemTag(rawValue: 1)
 }
 
-public enum CompletionItemEdit: Codable, Hashable, Sendable {
+@frozen public enum CompletionItemEdit: Codable, Hashable, Sendable {
   case textEdit(TextEdit)
   case insertReplaceEdit(InsertReplaceEdit)
 
@@ -205,7 +205,7 @@ public struct CompletionItem: ResponseType, Codable, Hashable, Sendable {
 }
 
 /// The format of the returned insertion text - either literal plain text or a snippet.
-public enum InsertTextFormat: Int, Codable, Hashable, Sendable {
+@frozen public enum InsertTextFormat: Int, Codable, Hashable, Sendable {
 
   /// The text to insert is plain text.
   case plain = 1

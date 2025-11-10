@@ -200,7 +200,7 @@ public struct ServerCapabilities: Codable, Hashable, Sendable {
   }
 }
 
-public enum ValueOrBool<ValueType: Codable>: Codable, Hashable where ValueType: Hashable {
+@frozen public enum ValueOrBool<ValueType: Codable>: Codable, Hashable where ValueType: Hashable {
   case bool(Bool)
   case value(ValueType)
 
@@ -240,7 +240,7 @@ public enum ValueOrBool<ValueType: Codable>: Codable, Hashable where ValueType: 
 
 extension ValueOrBool: Sendable where ValueType: Sendable {}
 
-public enum TextDocumentSync: Codable, Hashable, Sendable {
+@frozen public enum TextDocumentSync: Codable, Hashable, Sendable {
   case options(TextDocumentSyncOptions)
   case kind(TextDocumentSyncKind)
 
@@ -342,7 +342,7 @@ public struct TextDocumentSyncOptions: Codable, Hashable, Sendable {
   }
 }
 
-public enum TextDocumentSyncKind: Int, Codable, Hashable, Sendable {
+@frozen public enum TextDocumentSyncKind: Int, Codable, Hashable, Sendable {
 
   /// Documents should not be synced at all.
   case none = 0
@@ -355,7 +355,7 @@ public enum TextDocumentSyncKind: Int, Codable, Hashable, Sendable {
   case incremental = 2
 }
 
-public enum NotebookFilter: Codable, Hashable, Sendable {
+@frozen public enum NotebookFilter: Codable, Hashable, Sendable {
   case string(String)
   case documentFilter(DocumentFilter)
 
@@ -748,7 +748,7 @@ public struct DocumentOnTypeFormattingOptions: Codable, Hashable, Sendable {
 /// Wrapper type for a server's CodeActions' capabilities.
 /// If the client supports CodeAction literals, the server can return specific information about
 /// how CodeActions will be sent. Otherwise, the server's capabilities are determined by a boolean.
-public enum CodeActionServerCapabilities: Codable, Hashable, Sendable {
+@frozen public enum CodeActionServerCapabilities: Codable, Hashable, Sendable {
 
   case supportsCodeActionRequests(Bool)
   case supportsCodeActionRequestsWithLiterals(CodeActionOptions)
@@ -1157,7 +1157,7 @@ public struct WorkspaceServerCapabilities: Codable, Hashable, Sendable {
     }
   }
 
-  public enum FileOperationPatternKind: String, Codable, Hashable {
+  @frozen public enum FileOperationPatternKind: String, Codable, Hashable {
     /// The pattern matches a file only.
     case file = "file"
     /// The pattern matches a folder only.
