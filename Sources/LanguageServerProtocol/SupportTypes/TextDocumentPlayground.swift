@@ -45,8 +45,7 @@ public struct TextDocumentPlayground: ResponseType, Equatable, LSPAnyCodable {
   public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
     guard
       case .string(let id) = dictionary["id"],
-      case .dictionary(let rangeDict) = dictionary["range"],
-      let range = Range<Position>(fromLSPDictionary: rangeDict)
+      let range = Range<Position>(fromLSPAny: dictionary["range"])
     else {
       return nil
     }
