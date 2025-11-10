@@ -45,8 +45,7 @@ public struct Playground: ResponseType, Equatable, LSPAnyCodable {
   public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
     guard
       case .string(let id) = dictionary["id"],
-      case .dictionary(let locationDict) = dictionary["location"],
-      let location = Location(fromLSPDictionary: locationDict)
+      let location = Location(fromLSPAny: dictionary["location"])
     else {
       return nil
     }
