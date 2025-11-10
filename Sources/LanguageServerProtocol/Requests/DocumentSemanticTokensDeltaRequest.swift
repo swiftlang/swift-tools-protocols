@@ -28,7 +28,7 @@ public struct DocumentSemanticTokensDeltaRequest: TextDocumentRequest, Hashable 
   }
 }
 
-public enum DocumentSemanticTokensDeltaResponse: ResponseType, Codable, Equatable {
+@frozen public enum DocumentSemanticTokensDeltaResponse: ResponseType, Codable, Equatable {
   case tokens(DocumentSemanticTokensResponse)
   case delta(SemanticTokensDelta)
 

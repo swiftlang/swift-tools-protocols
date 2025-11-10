@@ -34,7 +34,7 @@ public struct DocumentSymbolRequest: TextDocumentRequest, Hashable {
   }
 }
 
-public enum DocumentSymbolResponse: ResponseType, Hashable {
+@frozen public enum DocumentSymbolResponse: ResponseType, Hashable {
   case documentSymbols([DocumentSymbol])
   case symbolInformation([SymbolInformation])
 

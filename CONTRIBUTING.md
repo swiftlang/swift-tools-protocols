@@ -28,3 +28,9 @@ See the [dedicated section][section] on the Swift project website.
 After you opened your PR, a maintainer will review it and test your changes in CI (*Continuous Integration*) by adding a `@swift-ci Please test` comment on the pull request. Once your PR is approved and CI has passed, the maintainer will merge your pull request.
 
 Only contributors with [commit access](https://www.swift.org/contributing/#commit-access) are able to approve pull requests and trigger CI.
+
+## API Design
+
+### Public `enum`s
+
+Enums should generally be marked as `@frozen` or `@nonexhaustive` to allow consistent behavior when switching over them in library-evolution and non-library-evolution builds. The default should be `@frozen` unless we expect to extend the enum without adopting a new LSP or BSP version, eg. because the type is part of an LSP extension. We do not need to anticipate the LSP/BSP specification changing since we plan to release a new major version of swift-tools-protocols when it gets updated to a new LSP or BSP specification version. Custom `CodingKey` enums should always be marked as `@nonexhaustive` because we want to be able to add new members to structs.

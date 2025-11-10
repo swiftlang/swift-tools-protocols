@@ -35,7 +35,7 @@ public struct DocumentDiagnosticsRequest: TextDocumentRequest {
 /// requested document or a unchanged report indicating that nothing
 /// has changed in terms of diagnostics in comparison to the last
 /// pull request.
-public enum DocumentDiagnosticReport: ResponseType, Codable, Hashable {
+@frozen public enum DocumentDiagnosticReport: ResponseType, Codable, Hashable {
   case full(RelatedFullDocumentDiagnosticReport)
   case unchanged(RelatedUnchangedDocumentDiagnosticReport)
 

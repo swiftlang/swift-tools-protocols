@@ -74,7 +74,7 @@ public struct InlayHintKind: RawRepresentable, Codable, Hashable, Sendable {
 }
 
 /// A hint's label, either being a single string or a composition of parts.
-public enum InlayHintLabel: Codable, Hashable, Sendable {
+@frozen public enum InlayHintLabel: Codable, Hashable, Sendable {
   case parts([InlayHintLabelPart])
   case string(String)
 

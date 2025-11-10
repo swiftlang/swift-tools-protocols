@@ -160,7 +160,7 @@ public struct SignatureInformation: Codable, Hashable, Sendable {
 /// Represents a parameter of a callable-signature. A parameter can
 /// have a label and a doc-comment.
 public struct ParameterInformation: Codable, Hashable, Sendable {
-  public enum Label: Codable, Hashable, Sendable {
+  @frozen public enum Label: Codable, Hashable, Sendable {
     case string(String)
     case offsets(start: Int, end: Int)
 

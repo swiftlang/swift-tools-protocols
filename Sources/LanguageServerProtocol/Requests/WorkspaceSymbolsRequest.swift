@@ -34,7 +34,7 @@ public struct WorkspaceSymbolsRequest: LSPRequest, Hashable {
   }
 }
 
-public enum WorkspaceSymbolItem: ResponseType, Hashable {
+@frozen public enum WorkspaceSymbolItem: ResponseType, Hashable {
   case symbolInformation(SymbolInformation)
   case workspaceSymbol(WorkspaceSymbol)
 
@@ -94,7 +94,7 @@ public struct SymbolInformation: Hashable, ResponseType {
 
 /// A special workspace symbol that supports locations without a range
 public struct WorkspaceSymbol: ResponseType, Hashable {
-  public enum WorkspaceSymbolLocation: Codable, Hashable, Sendable {
+  @frozen public enum WorkspaceSymbolLocation: Codable, Hashable, Sendable {
     public struct URI: Codable, Hashable, Sendable {
       public var uri: DocumentURI
 

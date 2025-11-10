@@ -117,7 +117,7 @@ public struct InlineValueEvaluatableExpression: Codable, Hashable, Sendable {
 /// - as a name to use for a variable lookup (class InlineValueVariableLookup)
 /// - as an evaluatable expression (class InlineValueEvaluatableExpression)
 /// The InlineValue types combines all inline value types into one type.
-public enum InlineValue: ResponseType, Hashable, Sendable {
+@frozen public enum InlineValue: ResponseType, Hashable, Sendable {
   case text(InlineValueText)
   case variableLookup(InlineValueVariableLookup)
   case evaluatableExpression(InlineValueEvaluatableExpression)

@@ -50,7 +50,7 @@ public struct CodeActionRequest: TextDocumentRequest, Hashable {
 /// Wrapper type for the response of a CodeAction request.
 /// If the client supports CodeAction literals, the encoded type will be the CodeAction array itself.
 /// Otherwise, the encoded value will be an array of CodeActions' inner Command structs.
-public enum CodeActionRequestResponse: ResponseType, Codable, Equatable {
+@frozen public enum CodeActionRequestResponse: ResponseType, Codable, Equatable {
   case codeActions([CodeAction])
   case commands([Command])
 

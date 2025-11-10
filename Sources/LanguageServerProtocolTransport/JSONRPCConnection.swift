@@ -31,7 +31,7 @@ import struct CDispatch.dispatch_fd_t
 /// For example, inside a language server, the `JSONRPCConnection` takes the language service implementation as its
 // `receiveHandler` and itself provides the client connection for sending notifications and callbacks.
 public final class JSONRPCConnection: Connection {
-  public enum TerminationReason: Sendable, Equatable {
+  @frozen public enum TerminationReason: Sendable, Equatable {
     /// The process on the other end of the `JSONRPCConnection` terminated with the given exit code.
     case exited(exitCode: Int32)
 

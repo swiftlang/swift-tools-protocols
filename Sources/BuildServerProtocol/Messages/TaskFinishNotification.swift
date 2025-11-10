@@ -165,7 +165,7 @@ public struct TestFinishData: Codable, Hashable, Sendable {
 
 }
 
-public enum TestStatus: Int, Codable, Hashable, Sendable {
+@frozen public enum TestStatus: Int, Codable, Hashable, Sendable {
   /// The test passed successfully.
   case passed = 1
 

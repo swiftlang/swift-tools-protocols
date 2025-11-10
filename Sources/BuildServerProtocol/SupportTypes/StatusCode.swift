@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-public enum StatusCode: Int, Codable, Hashable, Sendable {
+@frozen public enum StatusCode: Int, Codable, Hashable, Sendable {
   /// Execution was successful.
   case ok = 1
 

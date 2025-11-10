@@ -977,7 +977,7 @@ public struct GeneralClientCapabilities: Hashable, Codable, Sendable {
 
   /// A type indicating how positions are encoded,
   /// specifically what column offsets mean.
-  public enum PositionEncodingKind: String, Hashable, Codable, Sendable {
+  @frozen public enum PositionEncodingKind: String, Hashable, Codable, Sendable {
 
     /// Character offsets count UTF-8 code units (e.g bytes).
     case utf8 = "utf-8"

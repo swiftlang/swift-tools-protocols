@@ -21,7 +21,7 @@ import Foundation
 
 // MARK: - Log settings
 
-@_spi(SourceKitLSP) public enum LogConfig {
+@_spi(SourceKitLSP) @frozen public enum LogConfig {
   /// The globally set log level
   private static let _logLevel = ThreadSafeBox<NonDarwinLogLevel>(
     initialValue: {
@@ -80,7 +80,7 @@ import Foundation
 ///
 /// For documentation of the different log levels see
 /// https://developer.apple.com/documentation/os/oslogtype.
-@_spi(SourceKitLSP) public enum NonDarwinLogLevel: Comparable, CustomStringConvertible, Sendable {
+@_spi(SourceKitLSP) @frozen public enum NonDarwinLogLevel: Comparable, CustomStringConvertible, Sendable {
   case debug
   case info
   case `default`
@@ -137,7 +137,7 @@ import Foundation
 ///
 /// For documentation of the different privacy levels see
 /// https://developer.apple.com/documentation/os/oslogprivacy.
-@_spi(SourceKitLSP) public enum NonDarwinLogPrivacy: Comparable, Sendable {
+@_spi(SourceKitLSP) @frozen public enum NonDarwinLogPrivacy: Comparable, Sendable {
   case `public`
   case `private`
   case sensitive

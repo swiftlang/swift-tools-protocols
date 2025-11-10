@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 /// The severity level of a Diagnostic, between hint and error.
-public enum DiagnosticSeverity: Int, Codable, Hashable, Sendable {
+@frozen public enum DiagnosticSeverity: Int, Codable, Hashable, Sendable {
   case error = 1
   case warning = 2
   case information = 3
@@ -19,7 +19,7 @@ public enum DiagnosticSeverity: Int, Codable, Hashable, Sendable {
 }
 
 /// A unique diagnostic code, which may be used identifier the diagnostic in e.g. documentation.
-public enum DiagnosticCode: Hashable, Sendable {
+@frozen public enum DiagnosticCode: Hashable, Sendable {
   case number(Int)
   case string(String)
 }

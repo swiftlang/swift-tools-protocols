@@ -72,7 +72,7 @@ extension WorkspaceEdit: Codable {
   }
 }
 
-public enum WorkspaceEditDocumentChange: Codable, Hashable, Sendable {
+@frozen public enum WorkspaceEditDocumentChange: Codable, Hashable, Sendable {
   case textDocumentEdit(TextDocumentEdit)
   case createFile(CreateFile)
   case renameFile(RenameFile)
@@ -140,7 +140,7 @@ public struct CreateFile: Codable, Hashable, Sendable {
 
   // MARK: Codable conformance
 
-  public enum CodingKeys: String, CodingKey {
+  /*@nonexhaustive*/ public enum CodingKeys: String, CodingKey {
     case kind
     case uri
     case options
@@ -209,7 +209,7 @@ public struct RenameFile: Codable, Hashable, Sendable {
 
   // MARK: Codable conformance
 
-  public enum CodingKeys: String, CodingKey {
+  /*@nonexhaustive*/ public enum CodingKeys: String, CodingKey {
     case kind
     case oldUri
     case newUri
@@ -273,7 +273,7 @@ public struct DeleteFile: Codable, Hashable, Sendable {
 
   // MARK: Codable conformance
 
-  public enum CodingKeys: String, CodingKey {
+  /*@nonexhaustive*/ public enum CodingKeys: String, CodingKey {
     case kind
     case uri
     case options

@@ -13,7 +13,7 @@
 import Foundation
 public import LanguageServerProtocol
 
-@_spi(Testing) public enum JSONRPCMessage {
+@_spi(Testing) @frozen public enum JSONRPCMessage {
   case notification(NotificationType)
   case request(_RequestType, id: RequestID)
   case response(ResponseType, id: RequestID)

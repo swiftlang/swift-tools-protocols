@@ -25,7 +25,7 @@ public struct WorkDoneProgress: LSPNotification, Hashable {
   }
 }
 
-public enum WorkDoneProgressKind: Codable, Hashable, Sendable {
+@frozen public enum WorkDoneProgressKind: Codable, Hashable, Sendable {
   case begin(WorkDoneProgressBegin)
   case report(WorkDoneProgressReport)
   case end(WorkDoneProgressEnd)

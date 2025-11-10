@@ -36,7 +36,7 @@ public struct RegisterForChanges: BSPRequest {
   }
 }
 
-public enum RegisterAction: String, Hashable, Codable, Sendable {
+@frozen public enum RegisterAction: String, Hashable, Codable, Sendable {
   case register = "register"
   case unregister = "unregister"
 }

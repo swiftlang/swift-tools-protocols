@@ -93,7 +93,7 @@ public struct CompletionList: ResponseType, Hashable {
     }
   }
 
-  public enum ItemDefaultsEditRange: Codable, Hashable, Sendable {
+  @frozen public enum ItemDefaultsEditRange: Codable, Hashable, Sendable {
     case range(Range<Position>)
     case insertReplaceRanges(InsertReplaceRanges)
 
