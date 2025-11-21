@@ -128,6 +128,11 @@ public let builtinNotifications: [NotificationType.Type] = [
   WorkDoneProgress.self,
 ]
 
+extension MessageRegistry {
+  public static let lspProtocol: MessageRegistry =
+    MessageRegistry(requests: builtinRequests, notifications: builtinNotifications)
+}
+
 // MARK: Miscellaneous Message Types
 
 public struct VoidResponse: ResponseType, Hashable {
