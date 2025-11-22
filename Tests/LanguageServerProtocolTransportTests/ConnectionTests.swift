@@ -96,9 +96,7 @@ class ConnectionTests: XCTestCase {
 
     try await fulfillmentOfOrThrow(expectation2)
 
-    // Close the connection before accessing requestBuffer, which ensures we don't race.
     connection.serverToClientConnection.close()
-    XCTAssert(connection.serverToClientConnection.requestBufferIsEmpty)
   }
 
   func testEchoError() async throws {
@@ -245,8 +243,8 @@ class ConnectionTests: XCTestCase {
       let conn = JSONRPCConnection(
         name: "test",
         protocol: MessageRegistry(requests: [], notifications: []),
-        inFD: to.fileHandleForReading,
-        outFD: from.fileHandleForWriting
+        receiveFD: to.fileHandleForReading,
+        sendFD: from.fileHandleForWriting
       )
 
       final class DummyHandler: MessageHandler {

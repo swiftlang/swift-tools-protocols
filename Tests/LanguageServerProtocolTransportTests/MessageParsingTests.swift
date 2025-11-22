@@ -15,68 +15,62 @@ import LanguageServerProtocol
 import XCTest
 
 final class MessageParsingTests: XCTestCase {
+  func testBasicMessage() {
+    let parser = parserForTesting()
+    XCTAssertEqual(parser.nextReadLength, 1)
+    XCTAssertNil(parser.parse(chunk: "Content-Length: 2\r\n\r\n".data))
+    XCTAssertEqual(parser.nextReadLength, 2)
+    XCTAssertEqual(parser.parse(chunk: "{}".data), "{}")
+    XCTAssertEqual(parser.nextReadLength, 1)
+  }
 
-  func testSplitMessage() throws {
-    func check(
-      _ string: String,
-      contentLen: Int? = nil,
-      restLen: Int?,
-      file: StaticString = #filePath,
-      line: UInt = #line
-    ) throws {
-      let bytes: [UInt8] = [UInt8](string.utf8)
-      guard let (header, content, rest) = try bytes.jsonrpcSplitMessage() else {
-        XCTAssert(restLen == nil, "expected non-empty field", file: file, line: line)
-        return
-      }
-      XCTAssertEqual(rest.count, restLen, "rest", file: file, line: line)
-      XCTAssertEqual(content.count, contentLen, "content", file: file, line: line)
-      XCTAssertEqual(header.contentLength, contentLen, file: file, line: line)
-    }
+  func testSplitMessage() {
+    let parser = parserForTesting()
+    XCTAssertEqual(parser.nextReadLength, 1)
+    XCTAssertNil(parser.parse(chunk: "Content".data))
+    XCTAssertEqual(parser.nextReadLength, 1)
+    XCTAssertNil(parser.parse(chunk: "-Length: 2\r\n".data))
+    XCTAssertEqual(parser.nextReadLength, 1)
+    XCTAssertNil(parser.parse(chunk: "\r\n".data))
+    XCTAssertEqual(parser.nextReadLength, 2)
+    XCTAssertNil(parser.parse(chunk: "{".data))
+    XCTAssertEqual(parser.parse(chunk: "}".data), "{}")
+  }
 
-    func checkError(
-      _ string: String,
-      _ expected: MessageDecodingError,
-      file: StaticString = #filePath,
-      line: UInt = #line
-    ) {
-      do {
-        _ = try [UInt8](string.utf8).jsonrpcSplitMessage()
-        XCTFail("missing expected error", file: file, line: line)
-      } catch let error as MessageDecodingError {
-        XCTAssertEqual(error, expected, file: file, line: line)
-      } catch {
-        XCTFail("error \(error) does not match expected \(expected)", file: file, line: line)
-      }
-    }
+  func testMultipleMessage() {
+    let parser = parserForTesting()
+    XCTAssertNil(parser.parse(chunk: "Content-Length: 2\r\n\r\n".data))
+    XCTAssertEqual(parser.parse(chunk: "{}".data), "{}")
+    XCTAssertNil(parser.parse(chunk: "Content-Length: 2\r\n\r\n".data))
+    XCTAssertEqual(parser.parse(chunk: "{}".data), "{}")
+    XCTAssertNil(parser.parse(chunk: "Content-Length: 2\r\n\r\n".data))
+    XCTAssertNil(parser.parse(chunk: "{".data))
+    XCTAssertEqual(parser.parse(chunk: "}".data), "{}")
+    XCTAssertNil(parser.parse(chunk: "Content-Length: 2\r\n\r\n".data))
+    XCTAssertEqual(parser.parse(chunk: "{}".data), "{}")
+  }
 
-    try check("Content-Length: 2\r\n", restLen: nil)
-    try check("Content-Length: 1\r\n\r\n", restLen: nil)
-    try check("Content-Length: 2\r\n\r\n{", restLen: nil)
-
-    try check("Content-Length: 0\r\n\r\n", contentLen: 0, restLen: 0)
-    try check("Content-Length: 0\r\n\r\n{}", contentLen: 0, restLen: 2)
-    try check("Content-Length: 1\r\n\r\n{}", contentLen: 1, restLen: 1)
-    try check("Content-Length: 2\r\n\r\n{}", contentLen: 2, restLen: 0)
-    try check("Content-Length: 2\r\n\r\n{}Co", contentLen: 2, restLen: 2)
-
-    checkError("\r\n\r\n{}", MessageDecodingError.parseError("missing Content-Length header"))
+  func testInvalidHeader() {
+    let parser = parserForTesting()
+    XCTAssertNil(parser.parse(chunk: "\r\n\r\n".data))
+    XCTAssertNil(parser.parse(chunk: "Content\r\n\r\n".data))
+    XCTAssertNil(parser.parse(chunk: "Content-Length\r\n\r\n".data))
+    XCTAssertNil(parser.parse(chunk: "Content-Length:\r\n\r\n".data))
+    XCTAssertNil(parser.parse(chunk: "Content-Length: \r\n\r\n".data))
+    XCTAssertNil(parser.parse(chunk: "Content-Length: 0\r\n\r\n".data))
+    XCTAssertNil(parser.parse(chunk: "Content-Length: 2\r\n\r\n".data))
+    XCTAssertEqual(parser.parse(chunk: "{}".data), "{}")
   }
 
   func testParseHeader() throws {
     func check(
       _ string: String,
       header expected: JSONRPCMessageHeader? = nil,
-      restLen: Int?,
       file: StaticString = #filePath,
       line: UInt = #line
     ) throws {
-      let bytes: [UInt8] = [UInt8](string.utf8)
-      guard let (header, rest) = try bytes.jsonrcpParseHeader() else {
-        XCTAssert(restLen == nil, "expected non-empty field", file: file, line: line)
-        return
-      }
-      XCTAssertEqual(rest.count, restLen, "rest", file: file, line: line)
+      let bytes = [UInt8](string.utf8)
+      let header = try bytes.jsonrpcParseHeader()
       XCTAssertEqual(header, expected, file: file, line: line)
     }
 
@@ -87,7 +81,7 @@ final class MessageParsingTests: XCTestCase {
       line: UInt = #line
     ) {
       do {
-        _ = try bytes.jsonrcpParseHeader()
+        _ = try bytes.jsonrpcParseHeader()
         XCTFail("missing expected error", file: file, line: line)
       } catch let error as MessageDecodingError {
         XCTAssertEqual(error, expected, file: file, line: line)
@@ -105,15 +99,15 @@ final class MessageParsingTests: XCTestCase {
       checkErrorBytes([UInt8](string.utf8), expected, file: file, line: line)
     }
 
-    try check("", restLen: nil)
-    try check("C", restLen: nil)
-    try check("Content-Length: 1", restLen: nil)
-    try check("Content-Length: 1\r", restLen: nil)
-    try check("Content-Length: 1\r\n", restLen: nil)
-    try check("Content-Length: 1\r\n\r\n", header: JSONRPCMessageHeader(contentLength: 1), restLen: 0)
-    try check("Content-Length: 1\r\n\r\n{}", header: JSONRPCMessageHeader(contentLength: 1), restLen: 2)
-    try check("A:B\r\nContent-Length: 1\r\nC:D\r\n\r\n", header: JSONRPCMessageHeader(contentLength: 1), restLen: 0)
-    try check("Content-Length:123   \r\n\r\n", header: JSONRPCMessageHeader(contentLength: 123), restLen: 0)
+    try check("")
+    try check("C")
+    try check("Content-Length: 1")
+    try check("Content-Length: 1\r")
+    try check("Content-Length: 1\r\n")
+    try check("Content-Length: 1\r\n\r\n", header: JSONRPCMessageHeader(contentLength: 1))
+    try check("Content-Length: 1\r\n\r\n{}", header: JSONRPCMessageHeader(contentLength: 1))
+    try check("A:B\r\nContent-Length: 1\r\nC:D\r\n\r\n", header: JSONRPCMessageHeader(contentLength: 1))
+    try check("Content-Length:123   \r\n\r\n", header: JSONRPCMessageHeader(contentLength: 123))
 
     checkError("Content-Length:0x1\r\n\r\n", MessageDecodingError.parseError("expected integer value in 0x1"))
     checkError("Content-Length:a123\r\n\r\n", MessageDecodingError.parseError("expected integer value in a123"))
@@ -229,5 +223,17 @@ final class MessageParsingTests: XCTestCase {
 
     XCTAssertEqual(Int(ascii: "1234567890"), 1_234_567_890)
     XCTAssertEqual(Int(ascii: "\n\r \u{b}\u{d}\t45\n\t\r\u{c}"), 45)
+  }
+}
+
+private func parserForTesting() -> JSONMessageParser<String> {
+  return JSONMessageParser(decoder: { data in
+    return String(data: data, encoding: .utf8)
+  })
+}
+
+extension String {
+  fileprivate var data: Data {
+    return Data(self.utf8)
   }
 }
