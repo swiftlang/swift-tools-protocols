@@ -41,10 +41,9 @@ private let notificationTypes: [NotificationType.Type] = [
 ]
 
 extension MessageRegistry {
-  public static var bspProtocol: MessageRegistry {
+  public static let bspProtocol: MessageRegistry =
     MessageRegistry(requests: requestTypes, notifications: notificationTypes)
-  }
 }
 
 @available(*, deprecated, message: "use MessageRegistry.bspProtocol instead")
-public let bspRegistry = MessageRegistry(requests: requestTypes, notifications: notificationTypes)
+public var bspRegistry: MessageRegistry { MessageRegistry.bspProtocol }

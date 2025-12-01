@@ -11,10 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 public final class MessageRegistry: Sendable {
-
-  public static let lspProtocol: MessageRegistry =
-    MessageRegistry(requests: builtinRequests, notifications: builtinNotifications)
-
   private let methodToRequest: [String: _RequestType.Type]
   private let methodToNotification: [String: NotificationType.Type]
 
