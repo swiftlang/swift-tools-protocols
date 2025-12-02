@@ -196,6 +196,7 @@ public final class JSONRPCConnection: Connection {
     sendIO.setLimit(highWater: Int.max)
   }
 
+  #if os(macOS) || !canImport(Darwin)
   /// Creates and starts a `JSONRPCConnection` that connects to a subprocess launched with the specified arguments.
   ///
   /// `client` is the message handler that handles the messages sent from the subprocess to SourceKit-LSP.
@@ -267,6 +268,7 @@ public final class JSONRPCConnection: Connection {
 
     return (connection, process)
   }
+  #endif  // os(macOS) || !canImport(Darwin)
 
   deinit {
     assert(state == .closed)

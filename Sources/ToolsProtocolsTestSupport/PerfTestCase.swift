@@ -24,7 +24,7 @@ open class PerfTestCase: XCTestCase {
 
   #if !ENABLE_PERF_TESTS
 
-  #if os(macOS)
+  #if canImport(Darwin)
   open override func startMeasuring() {}
   open override func stopMeasuring() {}
   open override func measureMetrics(
