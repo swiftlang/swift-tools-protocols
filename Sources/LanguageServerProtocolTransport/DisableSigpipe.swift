@@ -10,7 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if canImport(Glibc)
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
 import Glibc
 #elseif canImport(Musl)
 import Musl
@@ -18,27 +20,22 @@ import Musl
 import Android
 #endif
 
-#if canImport(Glibc) || canImport(Musl) || canImport(Android)
+#if !os(Windows)
 // This is a lazily initialised global variable that when read for the first time, will ignore SIGPIPE.
 private let globallyIgnoredSIGPIPE: Bool = {
-  /* no F_SETNOSIGPIPE on Linux :( */
+  // No F_SETNOSIGPIPE on Linux
   _ = signal(SIGPIPE, SIG_IGN)
   return true
 }()
 #endif
 
-/// We receive a `SIGPIPE` if we write to a pipe that points to a crashed process. This in particular happens if the
-/// target of a `JSONRPCConnection` has crashed and we try to send it a message or if swift-format crashes and we try
-/// to send the source file to it.
+/// We receive a `SIGPIPE` if we write to a closed pipe. This can happen if the target of a `JSONRPCConnection` has
+/// crashed and we try to receive/send messages, or if eg. swift-format crashes and we try to send the source file to
+/// it.
 ///
-/// On Darwin, `DispatchIO` ignores `SIGPIPE` for the pipes handled by it and swift-tools-support-core offers
-/// `LocalFileOutputByteStream.disableSigpipe`, but that features is not available on Linux.
-///
-/// Instead, globally ignore `SIGPIPE` on Linux to prevent us from crashing if the `JSONRPCConnection`'s target crashes.
-///
-/// On Darwin platforms and on Windows this is a no-op.
+/// Globally ignore `SIGPIPE` across platforms to prevent us from crashing in these cases. This is a no-op on Windows.
 package func globallyDisableSigpipeIfNeeded() {
-  #if !canImport(Darwin) && !os(Windows)
+  #if !os(Windows)
   let haveWeIgnoredSIGPIEThisIsHereToTriggerIgnoringIt = globallyIgnoredSIGPIPE
   guard haveWeIgnoredSIGPIEThisIsHereToTriggerIgnoringIt else {
     fatalError("globallyIgnoredSIGPIPE should always be true")

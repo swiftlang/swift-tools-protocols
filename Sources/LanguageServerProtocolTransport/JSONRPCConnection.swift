@@ -51,6 +51,9 @@ public final class JSONRPCConnection: Connection {
   /// Queue for synchronizing all messages to ensure they remain in order
   private let queue: DispatchQueue = DispatchQueue(label: "jsonrpc-queue", qos: .userInitiated)
 
+  /// Queue for our read loop
+  private let readQueue: DispatchQueue = DispatchQueue(label: "jsonrpc-read-queue", qos: .userInitiated)
+
   /// File descriptor for reading input (eg. stdin for an LSP server)
   private let receiveFD: FileHandle
   /// If non-nil, all data received by `receiveFD` will be mirrored to this file handle
@@ -238,25 +241,24 @@ public final class JSONRPCConnection: Connection {
       self.closeHandler = closeHandler
     }
 
-    // `readabilityHandler` is only ever called sequentially and all accesses to `parser` happen within its callback
-    // synchronously.
-    nonisolated(unsafe) let parser = JSONMessageParser(decoder: decodeJSONRPCMessage)
-    self.receiveFD.readabilityHandler = { fileHandle in
-      let data = orLog("Reading from \(self.name)") { try fileHandle.read(upToCount: parser.nextReadLength) }
-      guard let data, !data.isEmpty else {
-        // We have reached the end of `receiveFD`, close the connection. This will also set the `readabilityHandler` of
-        // `receiveFD` to `nil`, breaking the retain cycle.
-        self.close()
-        return
-      }
+    self.readQueue.async {
+      let parser = JSONMessageParser(decoder: self.decodeJSONRPCMessage)
+      while true {
+        let data = orLog("Reading from \(self.name)") { try self.receiveFD.read(upToCount: parser.nextReadLength) }
+        guard let data, !data.isEmpty else {
+          // We have reached the end of `receiveFD`, close the connection.
+          self.close()
+          return
+        }
 
-      orLog("Writing receive mirror file") {
-        try self.receiveMirrorFile?.write(contentsOf: data)
-      }
+        orLog("Writing receive mirror file") {
+          try self.receiveMirrorFile?.write(contentsOf: data)
+        }
 
-      self.queue.sync {
-        if let message = parser.parse(chunk: data) {
-          self.handle(message)
+        self.queue.sync {
+          if let message = parser.parse(chunk: data) {
+            self.handle(message)
+          }
         }
       }
     }
@@ -413,11 +415,16 @@ public final class JSONRPCConnection: Connection {
   func handle(_ message: JSONRPCMessage) {
     dispatchPrecondition(condition: .onQueue(queue))
 
+    guard let receiveHandler, state == .running else {
+      logger.error("Ignoring message as the JSON-RPC connection is closed: \(message.prettyPrintedRedactedJSON)")
+      return
+    }
+
     switch message {
     case .notification(let notification):
-      notification._handle(self.receiveHandler!)
+      notification._handle(receiveHandler)
     case .request(let request, let id):
-      request._handle(self.receiveHandler!, id: id) { (response, id) in
+      request._handle(receiveHandler, id: id) { (response, id) in
         self.sendReply(response, id: id)
       }
     case .response(let response, let id):
@@ -457,14 +464,7 @@ public final class JSONRPCConnection: Connection {
       try self.sendFD.write(contentsOf: dispatchData)
     } catch {
       logger.fault("IO error sending message to \(self.name): \(error.forLogging)")
-      self.receiveFD.readabilityHandler = nil
-      // Match the pattern of `close()` but call `closeAssumingOnQueue` asynchronously to make sure that
-      // `closeAssumingOnQueue` is executed after all data from `receiveFD` has been read. This is important in case
-      // `receiveFD` contains an error message that indicates why we might no longer be able to send data through the
-      // JSON-RPC connection.
-      self.queue.async {
-        self.closeAssumingOnQueue()
-      }
+      self.closeAssumingOnQueue()
     }
   }
 
@@ -544,11 +544,8 @@ public final class JSONRPCConnection: Connection {
   /// Close the connection.
   ///
   /// The user-provided close handler will be called *asynchronously* when all outstanding I/O
-  /// operations have completed. No new I/O will be accepted after `close` returns.
+  /// operations have completed. No new I/O will be handled after `close` returns.
   public func close() {
-    // Stop reading any more data from `receiveFD`. Scheduling `closeAssumingOnQueue` on `queue` after closing
-    // `receiveFD` ensures that we won't read any more data after `closeAssumingOnQueue`.
-    self.receiveFD.readabilityHandler = nil
     queue.sync {
       closeAssumingOnQueue()
     }
@@ -565,13 +562,16 @@ public final class JSONRPCConnection: Connection {
 
     logger.log("Closing JSONRPCConnection to \(self.name)")
 
-    // Don't handle any further input/output
+    // Don't handle any further input/output. IMPORTANT: `sendFD` *must* be closed first so that the corresponding
+    // process sends an EOF to `receiveFD`, otherwise Windows will wait in `receiveFD.close` for the `receiveFD.read`
+    // on the read loop thread to return. macOS/Linux both return from the read with a `EPIPE` regardless, so the order
+    // doesn't matter there.
     self.receiveHandler = nil
-    orLog("Closing receiveFD to \(name)") {
-      try receiveFD.close()
-    }
     orLog("Closing sendFD to \(name)") {
       try sendFD.close()
+    }
+    orLog("Closing receiveFD to \(name)") {
+      try receiveFD.close()
     }
 
     for outstandingRequest in self.outstandingRequests.values {
