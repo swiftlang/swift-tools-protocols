@@ -26,10 +26,10 @@ import struct CDispatch.dispatch_fd_t
 
 /// A connection between a message handler (e.g. language server) in the same process as the connection object and a
 /// remote message handler (e.g. language client) that may run in another process using JSON RPC messages sent over a
-// pair of in/out file descriptors.
+/// pair of in/out file descriptors.
 ///
 /// For example, inside a language server, the `JSONRPCConnection` takes the language service implementation as its
-// `receiveHandler` and itself provides the client connection for sending notifications and callbacks.
+/// `receiveHandler` and itself provides the client connection for sending notifications and callbacks.
 public final class JSONRPCConnection: Connection {
   @frozen public enum TerminationReason: Sendable, Equatable {
     /// The process on the other end of the `JSONRPCConnection` terminated with the given exit code.
@@ -45,28 +45,31 @@ public final class JSONRPCConnection: Connection {
 
   /// The message handler that handles requests and notifications sent through this connection.
   ///
-  /// Access to this must be be guaranteed to be sequential to avoid data races. Currently, all access are
-  ///  - `init`: Reference to `JSONRPCConnection` trivially can't have escaped to other isolation domains yet.
-  ///  - `start`: Is required to be call in the same serial code region as the initializer, so
-  ///    `JSONRPCConnection` can't have escaped to other isolation domains yet.
-  ///  - `deinit`: Can also only trivially be called once.
-  nonisolated(unsafe) private var receiveHandler: MessageHandler?
+  /// - Important: Must only be accessed from `queue`, or in `init`/`deinit` to avoid data races.
+  nonisolated(unsafe) private var receiveHandler: MessageHandler? = nil
 
-  /// The queue on which we read the data
+  /// Queue for synchronizing all messages to ensure they remain in order
   private let queue: DispatchQueue = DispatchQueue(label: "jsonrpc-queue", qos: .userInitiated)
 
-  /// The queue on which we send data.
+  /// Queue for reading off of `receiveFD`
+  private let readQueue: DispatchQueue = DispatchQueue(label: "jsonrpc-read-queue", qos: .userInitiated)
+
+  /// Queue for sending any data through `sendFD`. This is currently needed as the read loop is blocked on messages
+  /// being parsed on `queue` (in order to not add an extra copy), so we must perform any corresponding sends off of
+  /// `queue`. If we ever change that, we can likely remove this queue.
   private let sendQueue: DispatchQueue = DispatchQueue(label: "jsonrpc-send-queue", qos: .userInitiated)
 
-  private let receiveIO: DispatchIO
-  private let sendIO: DispatchIO
+  /// File descriptor for reading input (eg. stdin for an LSP server)
+  private let receiveFD: FileHandle
+  /// If non-nil, all data received by `receiveFD` will be mirrored to this file handle
+  private let receiveMirrorFile: FileHandle?
+
+  /// File desciptor for sending output (eg. stdout for an LSP server)
+  private let sendFD: FileHandle
+  /// If non-nil, all output sent to `sendFD` will be mirrored to this file handle
+  private let sendMirrorFile: FileHandle?
+
   private let messageRegistry: MessageRegistry
-
-  /// If non-nil, all input received by this `JSONRPCConnection` will be written to the file handle
-  let inputMirrorFile: FileHandle?
-
-  /// If non-nil, all output created by this `JSONRPCConnection` will be written to the file handle
-  let outputMirrorFile: FileHandle?
 
   enum State {
     case created, running, closed
@@ -74,28 +77,13 @@ public final class JSONRPCConnection: Connection {
 
   /// Current state of the connection, used to ensure correct usage.
   ///
-  /// Access to this must be be guaranteed to be sequential to avoid data races. Currently, all access are
+  /// Access to this must be be guaranteed to be sequential to avoid data races. Currently, all access are:
   ///  - `init`: Reference to `JSONRPCConnection` trivially can't have escaped to other isolation domains yet.
-  ///  - `start`: Is required to be called in the same serial region as the initializer, so
-  ///    `JSONRPCConnection` can't have escaped to other isolation domains yet.
+  ///  - `start`: Synchronized on `queue`.
   ///  - `closeAssumingOnQueue`: Synchronized on `queue`.
   ///  - `readyToSend`: Synchronized on `queue`.
   ///  - `deinit`: Can also only trivially be called once.
-  private nonisolated(unsafe) var state: State
-
-  /// Buffer of received bytes that haven't been parsed.
-  ///
-  /// Access to this must be be guaranteed to be sequential to avoid data races. Currently, all access are
-  ///  - The `receiveIO` handler: This is synchronized on `queue`.
-  ///  - `requestBufferIsEmpty`: Also synchronized on `queue`.
-  private nonisolated(unsafe) var requestBuffer: [UInt8] = []
-
-  @_spi(Testing)
-  public var requestBufferIsEmpty: Bool {
-    queue.sync {
-      requestBuffer.isEmpty
-    }
-  }
+  private nonisolated(unsafe) var state: State = .created
 
   /// An integer that hasn't been used for a request ID yet.
   let nextRequestIDStorage = AtomicUInt32(initialValue: 0)
@@ -120,7 +108,8 @@ public final class JSONRPCConnection: Connection {
   private nonisolated(unsafe) var closeHandler: (@Sendable () async -> Void)? = nil
 
   /// - Important: `start` must be called before sending any data over the `JSONRPCConnection`.
-  public init(
+  @available(*, deprecated, message: "Use init(name:protocol:receiveFD:sendFD:receiveMirrorFile:sendMirrorFile instead")
+  public convenience init(
     name: String,
     protocol messageRegistry: MessageRegistry,
     inFD: FileHandle,
@@ -128,72 +117,32 @@ public final class JSONRPCConnection: Connection {
     inputMirrorFile: FileHandle? = nil,
     outputMirrorFile: FileHandle? = nil
   ) {
+    self.init(
+      name: name,
+      protocol: messageRegistry,
+      receiveFD: inFD,
+      sendFD: outFD,
+      receiveMirrorFile: inputMirrorFile,
+      sendMirrorFile: outputMirrorFile
+    )
+  }
+
+  /// - Important: `start` must be called before sending any data over the `JSONRPCConnection`.
+  public init(
+    name: String,
+    protocol messageRegistry: MessageRegistry,
+    receiveFD: FileHandle,
+    sendFD: FileHandle,
+    receiveMirrorFile: FileHandle? = nil,
+    sendMirrorFile: FileHandle? = nil
+  ) {
     self.name = name
-    self.inputMirrorFile = inputMirrorFile
-    self.outputMirrorFile = outputMirrorFile
-    self.receiveHandler = nil
-    globallyDisableSigpipeIfNeeded()
-    state = .created
+    self.receiveFD = receiveFD
+    self.receiveMirrorFile = receiveMirrorFile
+    self.sendFD = sendFD
+    self.sendMirrorFile = sendMirrorFile
     self.messageRegistry = messageRegistry
-
-    let ioGroup = DispatchGroup()
-
-    #if os(Windows)
-    let rawInFD = dispatch_fd_t(bitPattern: inFD._handle)
-    #else
-    let rawInFD = inFD.fileDescriptor
-    #endif
-
-    ioGroup.enter()
-    receiveIO = DispatchIO(
-      type: .stream,
-      fileDescriptor: rawInFD,
-      queue: queue,
-      cleanupHandler: { (error: Int32) in
-        if error != 0 {
-          logger.fault("IO error \(error)")
-        }
-        ioGroup.leave()
-      }
-    )
-
-    #if os(Windows)
-    let rawOutFD = dispatch_fd_t(bitPattern: outFD._handle)
-    #else
-    let rawOutFD = outFD.fileDescriptor
-    #endif
-
-    ioGroup.enter()
-    sendIO = DispatchIO(
-      type: .stream,
-      fileDescriptor: rawOutFD,
-      queue: sendQueue,
-      cleanupHandler: { (error: Int32) in
-        if error != 0 {
-          logger.fault("IO error \(error)")
-        }
-        ioGroup.leave()
-      }
-    )
-
-    ioGroup.notify(queue: queue) { [weak self] in
-      guard let self else { return }
-      for outstandingRequest in self.outstandingRequests.values {
-        outstandingRequest.replyHandler(LSPResult.failure(ResponseError.internalError("JSON-RPC Connection closed")))
-      }
-      self.outstandingRequests = [:]
-      self.receiveHandler = nil  // break retain cycle
-      Task {
-        await self.closeHandler?()
-      }
-    }
-
-    // We cannot assume the client will send us bytes in packets of any particular size, so set the lower limit to 1.
-    receiveIO.setLimit(lowWater: 1)
-    receiveIO.setLimit(highWater: Int.max)
-
-    sendIO.setLimit(lowWater: 1)
-    sendIO.setLimit(highWater: Int.max)
+    globallyDisableSigpipeIfNeeded()
   }
 
   #if os(macOS) || !canImport(Darwin)
@@ -215,8 +164,8 @@ public final class JSONRPCConnection: Connection {
     let connection = JSONRPCConnection(
       name: "\(name)",
       protocol: messageRegistry,
-      inFD: serverToClient.fileHandleForReading,
-      outFD: clientToServer.fileHandleForWriting
+      receiveFD: serverToClient.fileHandleForReading,
+      sendFD: clientToServer.fileHandleForWriting
     )
 
     connection.start(receiveHandler: client) {
@@ -297,45 +246,26 @@ public final class JSONRPCConnection: Connection {
       state = .running
       self.receiveHandler = receiveHandler
       self.closeHandler = closeHandler
+    }
 
-      receiveIO.read(offset: 0, length: Int.max, queue: queue) { done, data, errorCode in
-        guard errorCode == 0 else {
-          #if !os(Windows)
-          if errorCode != POSIXError.ECANCELED.rawValue {
-            logger.fault("IO error reading \(errorCode)")
-          }
-          #endif
-          if done { self.closeAssumingOnQueue() }
+    self.readQueue.async {
+      let parser = JSONMessageParser(decoder: self.decodeJSONRPCMessage)
+      while true {
+        let data = orLog("Reading from \(self.name)") { try self.receiveFD.read(upToCount: parser.nextReadLength) }
+        guard let data, !data.isEmpty else {
+          // We have reached the end of `receiveFD`, close the connection.
+          self.close()
           return
         }
 
-        if done {
-          self.closeAssumingOnQueue()
-          return
+        orLog("Writing receive mirror file") {
+          try self.receiveMirrorFile?.write(contentsOf: data)
         }
 
-        guard let data = data, !data.isEmpty else {
-          return
-        }
-
-        orLog("Writing input mirror file") {
-          try self.inputMirrorFile?.write(contentsOf: data)
-        }
-
-        // Parse and handle any messages in `buffer + data`, leaving any remaining unparsed bytes in `buffer`.
-        if self.requestBuffer.isEmpty {
-          data.withUnsafeBytes { (pointer: UnsafePointer<UInt8>) in
-            let rest = self.parseAndHandleMessages(from: UnsafeBufferPointer(start: pointer, count: data.count))
-            self.requestBuffer.append(contentsOf: rest)
+        self.queue.sync {
+          if let message = parser.parse(chunk: data) {
+            self.handle(message)
           }
-        } else {
-          self.requestBuffer.append(contentsOf: data)
-          var unused = 0
-          self.requestBuffer.withUnsafeBufferPointer { buffer in
-            let rest = self.parseAndHandleMessages(from: buffer)
-            unused = rest.count
-          }
-          self.requestBuffer.removeFirst(self.requestBuffer.count - unused)
         }
       }
     }
@@ -349,6 +279,7 @@ public final class JSONRPCConnection: Connection {
   /// - Important: Must be called on `queue`
   private func sendMessageCodingErrorNotificationToClient(message: String) {
     dispatchPrecondition(condition: .onQueue(queue))
+
     let showMessage = ShowMessageNotification(
       type: .error,
       message: """
@@ -367,8 +298,9 @@ public final class JSONRPCConnection: Connection {
   /// Callers should consider the message handled and ignore it when this function returns `nil`.
   ///
   /// - Important: Must be called on `queue`
-  private func decodeJSONRPCMessage(messageBytes: Slice<UnsafeBufferPointer<UInt8>>) -> JSONRPCMessage? {
+  private func decodeJSONRPCMessage(_ messageBytes: Data) -> JSONRPCMessage? {
     dispatchPrecondition(condition: .onQueue(queue))
+
     let decoder = JSONDecoder()
 
     // Set message registry to use for model decoding.
@@ -386,10 +318,9 @@ public final class JSONRPCConnection: Connection {
     }
 
     do {
-      let pointer = UnsafeMutableRawPointer(mutating: UnsafeBufferPointer(rebasing: messageBytes).baseAddress!)
       return try decoder.decode(
         JSONRPCMessage.self,
-        from: Data(bytesNoCopy: pointer, count: messageBytes.count, deallocator: .none)
+        from: messageBytes
       )
     } catch let error as MessageDecodingError {
       logger.fault("Failed to decode message: \(error.forLogging)")
@@ -472,10 +403,12 @@ public final class JSONRPCConnection: Connection {
   ///
   /// - parameter shouldLog: Whether to log an info message if not ready.
   ///
-  /// - Important: Must be called on `queue`. Note that the state might change as soon as execution leaves `queue`.
+  /// - Important: Must be called on `queue`. Note that the state might change as soon as execution leaves
+  ///  `queue`.
   func readyToSend(shouldLog: Bool = true) -> Bool {
     dispatchPrecondition(condition: .onQueue(queue))
     precondition(state != .created, "tried to send message before calling start(messageHandler:)")
+
     let ready = state == .running
     if shouldLog && !ready {
       logger.error("Ignoring message; state = \(String(reflecting: self.state), privacy: .public)")
@@ -483,48 +416,22 @@ public final class JSONRPCConnection: Connection {
     return ready
   }
 
-  /// Parse and handle all messages in `bytes`, returning a slice containing any remaining incomplete data.
-  ///
-  /// - Important: Must be called on `queue`
-  func parseAndHandleMessages(from bytes: UnsafeBufferPointer<UInt8>) -> UnsafeBufferPointer<UInt8>.SubSequence {
-    dispatchPrecondition(condition: .onQueue(queue))
-
-    var bytes = bytes[...]
-
-    MESSAGE_LOOP: while true {
-      // Split the messages based on the Content-Length header.
-      let messageBytes: Slice<UnsafeBufferPointer<UInt8>>
-      do {
-        guard let (header: _, message: message, rest: rest) = try bytes.jsonrpcSplitMessage() else {
-          return bytes
-        }
-        messageBytes = message
-        bytes = rest
-      } catch {
-        // We failed to parse the message header. There isn't really much we can do to recover because we lost our
-        // anchor in the stream where new messages start. Crashing and letting ourselves be restarted by the client is
-        // probably the best option.
-        sendMessageCodingErrorNotificationToClient(message: "Failed to find next message in connection to editor")
-        fatalError("fatal error encountered while splitting JSON RPC messages \(error)")
-      }
-
-      guard let message = decodeJSONRPCMessage(messageBytes: messageBytes) else {
-        continue
-      }
-      handle(message)
-    }
-  }
-
   /// Handle a single message by dispatching it to `receiveHandler` or an appropriate reply handler.
   ///
   /// - Important: Must be called on `queue`
   func handle(_ message: JSONRPCMessage) {
     dispatchPrecondition(condition: .onQueue(queue))
+
+    guard let receiveHandler, state == .running else {
+      logger.error("Ignoring message as the JSON-RPC connection is closed: \(message.prettyPrintedRedactedJSON)")
+      return
+    }
+
     switch message {
     case .notification(let notification):
-      notification._handle(self.receiveHandler!)
+      notification._handle(receiveHandler)
     case .request(let request, let id):
-      request._handle(self.receiveHandler!, id: id) { (response, id) in
+      request._handle(receiveHandler, id: id) { (response, id) in
         self.sendReply(response, id: id)
       }
     case .response(let response, let id):
@@ -553,21 +460,22 @@ public final class JSONRPCConnection: Connection {
   /// - Important: Must be called on `queue`
   private func send(data dispatchData: DispatchData) {
     dispatchPrecondition(condition: .onQueue(queue))
+
     guard readyToSend() else { return }
 
-    orLog("Writing output mirror file") {
-      try outputMirrorFile?.write(contentsOf: dispatchData)
-    }
-    sendIO.write(offset: 0, data: dispatchData, queue: sendQueue) { [weak self] done, _, errorCode in
-      if errorCode != 0 {
-        logger.fault("IO error sending message \(errorCode)")
-        if done, let self {
-          // An unrecoverable error occurs on the channel’s file descriptor.
-          // Close the connection.
-          self.queue.async {
-            self.closeAssumingOnQueue()
-          }
-        }
+    #if !os(macOS)
+    nonisolated(unsafe) let dispatchData = dispatchData
+    #endif
+    sendQueue.async {
+      orLog("Writing send mirror file") {
+        try self.sendMirrorFile?.write(contentsOf: dispatchData)
+      }
+
+      do {
+        try self.sendFD.write(contentsOf: dispatchData)
+      } catch {
+        logger.fault("IO error sending message to \(self.name): \(error.forLogging)")
+        self.close()
       }
     }
   }
@@ -588,7 +496,7 @@ public final class JSONRPCConnection: Connection {
   /// If an unrecoverable error occurred on the channel's file descriptor, the connection gets closed.
   ///
   /// - Important: Must be called on `queue`
-  func send(_ message: JSONRPCMessage) {
+  private func send(_ message: JSONRPCMessage) {
     dispatchPrecondition(condition: .onQueue(queue))
 
     let encoder = JSONEncoder()
@@ -648,9 +556,11 @@ public final class JSONRPCConnection: Connection {
   /// Close the connection.
   ///
   /// The user-provided close handler will be called *asynchronously* when all outstanding I/O
-  /// operations have completed. No new I/O will be accepted after `close` returns.
+  /// operations have completed. No new I/O will be handled after `close` returns.
   public func close() {
-    queue.sync { closeAssumingOnQueue() }
+    queue.sync {
+      closeAssumingOnQueue()
+    }
   }
 
   /// Close the connection, assuming that the code is already executing on `queue`.
@@ -658,15 +568,33 @@ public final class JSONRPCConnection: Connection {
   /// - Important: Must be called on `queue`.
   private func closeAssumingOnQueue() {
     dispatchPrecondition(condition: .onQueue(queue))
-    sendQueue.sync {
-      guard state == .running else { return }
-      state = .closed
 
-      logger.log("Closing JSONRPCConnection...")
-      // Attempt to close the reader immediately; we do not need to accept remaining inputs.
-      receiveIO.close(flags: .stop)
-      // Close the writer after it finishes outstanding work.
-      sendIO.close()
+    guard state == .running else { return }
+    state = .closed
+
+    logger.log("Closing JSONRPCConnection to \(self.name)")
+
+    // Allow any data in queue to be sent before closing
+    sendQueue.sync {
+      // IMPORTANT: `sendFD` *must* be closed first so that the corresponding process sends an EOF to `receiveFD`,
+      // otherwise Windows will wait in `receiveFD.close` for the `receiveFD.read` on the read loop thread to return.
+      // macOS/Linux both return from the read with a `EPIPE` regardless, so the order doesn't matter there.
+      orLog("Closing sendFD to \(name)") {
+        try sendFD.close()
+      }
+      orLog("Closing receiveFD to \(name)") {
+        try receiveFD.close()
+      }
+    }
+
+    self.receiveHandler = nil
+    for outstandingRequest in self.outstandingRequests.values {
+      outstandingRequest.replyHandler(LSPResult.failure(ResponseError.internalError("JSON-RPC connection closed")))
+    }
+    self.outstandingRequests = [:]
+
+    Task {
+      await self.closeHandler?()
     }
   }
 
@@ -698,13 +626,13 @@ public final class JSONRPCConnection: Connection {
     id: RequestID,
     reply: @escaping @Sendable (LSPResult<Request.Response>) -> Void
   ) {
-    self.queue.sync {
-      guard readyToSend() else {
+    self.queue.async {
+      guard self.readyToSend() else {
         reply(.failure(.serverCancelled))
         return
       }
 
-      outstandingRequests[id] = OutstandingRequest(
+      self.outstandingRequests[id] = OutstandingRequest(
         responseType: Request.Response.self,
         replyHandler: { anyResult in
           let result = anyResult.map { $0 as! Request.Response }
@@ -736,7 +664,7 @@ public final class JSONRPCConnection: Connection {
         """
       )
 
-      send(.request(request, id: id))
+      self.send(.request(request, id: id))
       return
     }
   }

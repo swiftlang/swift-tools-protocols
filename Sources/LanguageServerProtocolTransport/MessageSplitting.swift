@@ -10,14 +10,118 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+package import Foundation
 import LanguageServerProtocol
+@_spi(SourceKitLSP) import SKLogging
 
+/// A stateful JSONRPC message parser. Expects data to be read in chunks of `nextReadLength`, though technically
+/// handles any size as long as it doesn't pass header/contents/message boundaries (which `nextReadLength` ensures).
+package class JSONMessageParser<MessageType> {
+  /// Decoder of the JSON message contents
+  private let decoder: (Data) -> MessageType?
+
+  /// Buffer of received bytes that haven't been fully parsed.
+  private var requestBuffer: Data = Data()
+
+  /// Current parser state
+  private var state: ReadState = .header
+
+  /// The number of bytes to read given the current state of the parser.
+  package var nextReadLength: Int {
+    switch state {
+    case .header:
+      // Only ever read a single byte for the header to better handle invalid cases
+      return 1
+    case .content(let remaining):
+      // Up until the message, where we should read its entire length (or anything remaining if we had a partial read)
+      return remaining
+    }
+  }
+
+  package init(decoder: @escaping (Data) -> MessageType?) {
+    self.decoder = decoder
+  }
+
+  /// Parse the next chunk of data (see `nextReadLength`). Returns a message parsed by `decoder` if read and `nil`
+  /// otherwise (including on error). Note that this does not handle being passed a chunk that crosses header+contents
+  /// boundaries or whole message boundaries.
+  package func parse(chunk: Data) -> MessageType? {
+    switch state {
+    case .header:
+      parseHeader(data: chunk)
+      return nil
+    case .content(let remaining):
+      return parseContent(data: chunk, remaining: remaining)
+    }
+  }
+
+  private func parseHeader(data: Data) {
+    requestBuffer += data
+    if requestBuffer.suffix(4) != JSONRPCMessageHeader.headerSeparator {
+      return
+    }
+
+    let header = orLog("Parsing JSONRPC message") {
+      try requestBuffer.jsonrpcParseHeader()
+    }
+    requestBuffer.removeAll(keepingCapacity: true)
+
+    guard let header,
+      let length = header.contentLength,
+      length > 0
+    else {
+      logger.error("Ignoring message due to invalid header")
+      return
+    }
+
+    state = .content(remaining: length)
+  }
+
+  private func parseContent(data: Data, remaining: Int) -> MessageType? {
+    precondition(data.count <= remaining, "Received chunk larger than remaining content size")
+
+    if data.count < remaining {
+      // Don't have the whole message yet
+      requestBuffer += data
+      state = .content(remaining: remaining - data.count)
+      return nil
+    }
+
+    // Two cases here:
+    // 1. The whole message was read at once
+    // 2. The reads were split
+    //
+    // For (1), `requestBuffer` will be empty and we can use `data` directly to avoid the extra copy.
+    let message: MessageType?
+    if requestBuffer.isEmpty {
+      message = decoder(data)
+    } else {
+      requestBuffer += data
+      message = decoder(requestBuffer)
+    }
+    requestBuffer.removeAll(keepingCapacity: true)
+
+    state = .header
+
+    if message == nil {
+      logger.error("Ignoring message due to invalid content")
+    }
+    return message
+  }
+}
+
+private enum ReadState {
+  case header
+  case content(remaining: Int)
+}
+
+@_spi(Testing)
 public struct JSONRPCMessageHeader: Hashable {
   static let contentLengthKey: [UInt8] = [UInt8]("Content-Length".utf8)
   static let separator: [UInt8] = [UInt8]("\r\n".utf8)
   static let colon: UInt8 = UInt8(ascii: ":")
   static let invalidKeyBytes: [UInt8] = [colon] + separator
+  static let headerSeparator: [UInt8] = Array("\r\n\r\n".utf8)
 
   public var contentLength: Int? = nil
 
@@ -27,33 +131,13 @@ public struct JSONRPCMessageHeader: Hashable {
 }
 
 extension RandomAccessCollection<UInt8> where Index == Int {
-  /// Tries to parse a single message from this collection of bytes.
-  ///
-  /// If an entire message could be found, returns
-  ///  - header (representing `Content-Length:<length>\r\n\r\n`)
-  ///  - message: The data that represents the actual message as JSON
-  ///  - rest: The remaining bytes that haven't weren't part of the first message in this collection
-  ///
-  /// If a `Content-Length` header could be found but the collection doesn't have enough bytes for the entire message
-  /// (eg. because the `Content-Length` header has been transmitted yet but not the entire message), returns `nil`.
-  /// Callers should call this method again once more data is available.
   @_spi(Testing)
-  public func jsonrpcSplitMessage() throws -> (header: JSONRPCMessageHeader, message: SubSequence, rest: SubSequence)? {
-    guard let (header, rest) = try jsonrcpParseHeader() else { return nil }
-    guard let contentLength = header.contentLength else {
-      throw MessageDecodingError.parseError("missing Content-Length header")
-    }
-    if contentLength > rest.count { return nil }
-    return (header: header, message: rest.prefix(contentLength), rest: rest.dropFirst(contentLength))
-  }
-
-  @_spi(Testing)
-  public func jsonrcpParseHeader() throws -> (header: JSONRPCMessageHeader, rest: SubSequence)? {
+  public func jsonrpcParseHeader() throws -> JSONRPCMessageHeader? {
     var header = JSONRPCMessageHeader()
     var slice = self[...]
     while let (kv, rest) = try slice.jsonrpcParseHeaderField() {
       guard let (key, value) = kv else {
-        return (header, rest)
+        return header
       }
       slice = rest
 

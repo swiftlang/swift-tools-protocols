@@ -40,15 +40,15 @@ package final class TestJSONRPCConnection: Sendable {
     clientToServerConnection = JSONRPCConnection(
       name: "client",
       protocol: testMessageRegistry,
-      inFD: serverToClient.fileHandleForReading,
-      outFD: clientToServer.fileHandleForWriting
+      receiveFD: serverToClient.fileHandleForReading,
+      sendFD: clientToServer.fileHandleForWriting
     )
 
     serverToClientConnection = JSONRPCConnection(
       name: "server",
       protocol: testMessageRegistry,
-      inFD: clientToServer.fileHandleForReading,
-      outFD: serverToClient.fileHandleForWriting
+      receiveFD: clientToServer.fileHandleForReading,
+      sendFD: serverToClient.fileHandleForWriting
     )
 
     client = TestClient(
