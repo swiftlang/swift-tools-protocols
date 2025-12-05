@@ -51,8 +51,13 @@ public final class JSONRPCConnection: Connection {
   /// Queue for synchronizing all messages to ensure they remain in order
   private let queue: DispatchQueue = DispatchQueue(label: "jsonrpc-queue", qos: .userInitiated)
 
-  /// Queue for our read loop
+  /// Queue for reading off of `receiveFD`
   private let readQueue: DispatchQueue = DispatchQueue(label: "jsonrpc-read-queue", qos: .userInitiated)
+
+  /// Queue for sending any data through `sendFD`. This is currently needed as the read loop is blocked on messages
+  /// being parsed on `queue` (in order to not add an extra copy), so we must perform any corresponding sends off of
+  /// `queue`. If we ever change that, we can likely remove this queue.
+  private let sendQueue: DispatchQueue = DispatchQueue(label: "jsonrpc-send-queue", qos: .userInitiated)
 
   /// File descriptor for reading input (eg. stdin for an LSP server)
   private let receiveFD: FileHandle
@@ -456,15 +461,20 @@ public final class JSONRPCConnection: Connection {
 
     guard readyToSend() else { return }
 
-    orLog("Writing send mirror file") {
-      try sendMirrorFile?.write(contentsOf: dispatchData)
-    }
+    #if !os(macOS)
+    nonisolated(unsafe) let dispatchData = dispatchData
+    #endif
+    sendQueue.async {
+      orLog("Writing send mirror file") {
+        try self.sendMirrorFile?.write(contentsOf: dispatchData)
+      }
 
-    do {
-      try self.sendFD.write(contentsOf: dispatchData)
-    } catch {
-      logger.fault("IO error sending message to \(self.name): \(error.forLogging)")
-      self.closeAssumingOnQueue()
+      do {
+        try self.sendFD.write(contentsOf: dispatchData)
+      } catch {
+        logger.fault("IO error sending message to \(self.name): \(error.forLogging)")
+        self.close()
+      }
     }
   }
 
@@ -562,18 +572,20 @@ public final class JSONRPCConnection: Connection {
 
     logger.log("Closing JSONRPCConnection to \(self.name)")
 
-    // Don't handle any further input/output. IMPORTANT: `sendFD` *must* be closed first so that the corresponding
-    // process sends an EOF to `receiveFD`, otherwise Windows will wait in `receiveFD.close` for the `receiveFD.read`
-    // on the read loop thread to return. macOS/Linux both return from the read with a `EPIPE` regardless, so the order
-    // doesn't matter there.
-    self.receiveHandler = nil
-    orLog("Closing sendFD to \(name)") {
-      try sendFD.close()
-    }
-    orLog("Closing receiveFD to \(name)") {
-      try receiveFD.close()
+    // Allow any data in queue to be sent before closing
+    sendQueue.sync {
+      // IMPORTANT: `sendFD` *must* be closed first so that the corresponding process sends an EOF to `receiveFD`,
+      // otherwise Windows will wait in `receiveFD.close` for the `receiveFD.read` on the read loop thread to return.
+      // macOS/Linux both return from the read with a `EPIPE` regardless, so the order doesn't matter there.
+      orLog("Closing sendFD to \(name)") {
+        try sendFD.close()
+      }
+      orLog("Closing receiveFD to \(name)") {
+        try receiveFD.close()
+      }
     }
 
+    self.receiveHandler = nil
     for outstandingRequest in self.outstandingRequests.values {
       outstandingRequest.replyHandler(LSPResult.failure(ResponseError.internalError("JSON-RPC connection closed")))
     }
