@@ -30,10 +30,19 @@ package class JSONMessageParser<MessageType> {
   package var nextReadLength: Int {
     switch state {
     case .header:
-      // Only ever read a single byte for the header to better handle invalid cases
-      return 1
+      // The header and content is split by `\r\n\r\n`. If we had the full separator, then we would be in `.content`
+      // state.
+      if requestBuffer.last == UInt8(ascii: "\n") {
+        // Can always read at least 2 bytes (we're either at `\r\n` or a lone `\n`)
+        return 2
+      } else if requestBuffer.last == UInt8(ascii: "\r") {
+        // Could be at `\r\n\r`, so can only read a single byte
+        return 1
+      }
+      // Don't have any part of the header separator, so can read at least its length
+      return 4
     case .content(let remaining):
-      // Up until the message, where we should read its entire length (or anything remaining if we had a partial read)
+      // Read up until the end of the message (or anything remaining if we had a partial read)
       return remaining
     }
   }
