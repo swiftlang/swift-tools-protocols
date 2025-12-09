@@ -74,11 +74,11 @@ class ConnectionTests: XCTestCase {
       "Content-Length: \(notification2.count)\r\n\r\n\(String(data: notification2, encoding: .utf8)!)"
 
     for b in notification1Str.utf8.dropLast() {
-      clientConnection.send(_rawData: [b].withUnsafeBytes { DispatchData(bytes: $0) })
+      clientConnection.send(data: Data([b]))
     }
 
     clientConnection.send(
-      _rawData: [notification1Str.utf8.last!, notfication2Str.utf8.first!].withUnsafeBytes { DispatchData(bytes: $0) }
+      data: Data([notification1Str.utf8.last!, notfication2Str.utf8.first!])
     )
 
     try await fulfillmentOfOrThrow(expectation)
@@ -91,7 +91,7 @@ class ConnectionTests: XCTestCase {
     }
 
     for b in notfication2Str.utf8.dropFirst() {
-      clientConnection.send(_rawData: [b].withUnsafeBytes { DispatchData(bytes: $0) })
+      clientConnection.send(data: Data([b]))
     }
 
     try await fulfillmentOfOrThrow(expectation2)
@@ -305,8 +305,6 @@ class ConnectionTests: XCTestCase {
 fileprivate extension JSONRPCConnection {
   func send(message: String) {
     let messageWithHeader = "Content-Length: \(message.utf8.count)\r\n\r\n\(message)".data(using: .utf8)!
-    messageWithHeader.withUnsafeBytes { bytes in
-      send(_rawData: DispatchData(bytes: bytes))
-    }
+    send(data: messageWithHeader)
   }
 }

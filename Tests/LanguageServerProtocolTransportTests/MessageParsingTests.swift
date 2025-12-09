@@ -17,24 +17,27 @@ import XCTest
 final class MessageParsingTests: XCTestCase {
   func testBasicMessage() {
     let parser = parserForTesting()
-    XCTAssertEqual(parser.nextReadLength, 1)
+    XCTAssertEqual(parser.nextReadLength, 4)
     XCTAssertNil(parser.parse(chunk: "Content-Length: 2\r\n\r\n".data))
     XCTAssertEqual(parser.nextReadLength, 2)
     XCTAssertEqual(parser.parse(chunk: "{}".data), "{}")
-    XCTAssertEqual(parser.nextReadLength, 1)
+    XCTAssertEqual(parser.nextReadLength, 4)
   }
 
   func testSplitMessage() {
     let parser = parserForTesting()
-    XCTAssertEqual(parser.nextReadLength, 1)
+    XCTAssertEqual(parser.nextReadLength, 4)
     XCTAssertNil(parser.parse(chunk: "Content".data))
+    XCTAssertEqual(parser.nextReadLength, 4)
+    XCTAssertNil(parser.parse(chunk: "-Length: 2\r".data))
     XCTAssertEqual(parser.nextReadLength, 1)
-    XCTAssertNil(parser.parse(chunk: "-Length: 2\r\n".data))
-    XCTAssertEqual(parser.nextReadLength, 1)
+    XCTAssertNil(parser.parse(chunk: "\n".data))
+    XCTAssertEqual(parser.nextReadLength, 2)
     XCTAssertNil(parser.parse(chunk: "\r\n".data))
     XCTAssertEqual(parser.nextReadLength, 2)
     XCTAssertNil(parser.parse(chunk: "{".data))
     XCTAssertEqual(parser.parse(chunk: "}".data), "{}")
+    XCTAssertEqual(parser.nextReadLength, 4)
   }
 
   func testMultipleMessage() {
