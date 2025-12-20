@@ -47,6 +47,10 @@ public struct SemanticTokenModifiers: OptionSet, Hashable, Sendable {
   public static let fileScope = Self(rawValue: 1 << 19)
   public static let globalScope = Self(rawValue: 1 << 20)
 
+  // The following is an LSP extension from SourceKit-LSP
+  /// Marks a token as a parameter label in a function signature or call.
+  public static let parameterLabel = Self(rawValue: 1 << 21)
+
   public var name: String? {
     switch self {
     case .declaration: return "declaration"
@@ -70,6 +74,7 @@ public struct SemanticTokenModifiers: OptionSet, Hashable, Sendable {
     case .classScope: return "classScope"
     case .fileScope: return "fileScope"
     case .globalScope: return "globalScope"
+    case .parameterLabel: return "parameterLabel"
     default: return nil
     }
   }
@@ -98,5 +103,6 @@ public struct SemanticTokenModifiers: OptionSet, Hashable, Sendable {
     .classScope,
     .fileScope,
     .globalScope,
+    .parameterLabel,
   ]
 }
