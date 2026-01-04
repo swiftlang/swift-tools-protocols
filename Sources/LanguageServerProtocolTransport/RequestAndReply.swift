@@ -15,15 +15,18 @@ public import LanguageServerProtocol
 
 /// A request and a callback that returns the request's reply
 public final class RequestAndReply<Params: RequestType>: Sendable {
+  /// The request that is handled by this `RequestAndReply` object.
   public let params: Params
-  private let replyBlock: @Sendable (LSPResult<Params.Response>) -> Void
+
+  /// The closure that is invoked when the `body` closure passed to `reply` terminates.
+  private let reply: @Sendable (Result<Params.Response, any Error>) -> Void
 
   /// Whether a reply has been made. Every request must reply exactly once.
   private let replied: AtomicBool = AtomicBool(initialValue: false)
 
-  public init(_ request: Params, reply: @escaping @Sendable (LSPResult<Params.Response>) -> Void) {
+  public init(_ request: Params, reply: @escaping @Sendable (Result<Params.Response, any Error>) -> Void) {
     self.params = request
-    self.replyBlock = reply
+    self.reply = reply
   }
 
   deinit {
@@ -31,13 +34,13 @@ public final class RequestAndReply<Params: RequestType>: Sendable {
   }
 
   /// Call the `replyBlock` with the result produced by the given closure.
-  public func reply(_ body: @Sendable () async throws -> Params.Response) async {
-    precondition(!replied.value, "replied to request more than once")
-    replied.value = true
+  public func reply(_ body: () async throws -> Params.Response) async {
+    let didReply = replied.setAndGet(newValue: true)
+    precondition(!didReply, "replied to request more than once")
     do {
-      replyBlock(.success(try await body()))
+      reply(.success(try await body()))
     } catch {
-      replyBlock(.failure(ResponseError(error)))
+      reply(.failure(error))
     }
   }
 }
