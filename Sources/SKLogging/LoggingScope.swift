@@ -86,7 +86,7 @@ public final class LoggingScope {
 @_spi(SourceKitLSP) public func withLoggingSubsystemAndScope<Result>(
   subsystem: String,
   scope: String?,
-  @_inheritActorContext _ operation: @Sendable @concurrent () async throws -> Result
+  _ operation: nonisolated(nonsending) () async throws -> Result
 ) async rethrows -> Result {
   return try await LoggingScope.$_subsystem.withValue(subsystem) {
     return try await LoggingScope.$_scope.withValue(scope, operation: operation)
@@ -116,7 +116,7 @@ public final class LoggingScope {
 /// - SeeAlso: ``withLoggingScope(_:_:)-6qtga``
 @_spi(SourceKitLSP) public func withLoggingScope<Result>(
   _ scope: String,
-  @_inheritActorContext _ operation: @Sendable @concurrent () async throws -> Result
+  _ operation: nonisolated(nonsending) () async throws -> Result
 ) async rethrows -> Result {
   return try await LoggingScope.$_scope.withValue(
     scope,
