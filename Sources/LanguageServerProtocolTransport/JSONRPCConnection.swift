@@ -474,7 +474,8 @@ public final class JSONRPCConnection: Connection {
         try self.sendFD.write(contentsOf: data)
       } catch {
         logger.fault("IO error sending message to \(self.name): \(error.forLogging)")
-        self.close()
+        // This probably means the peer process exited unexpectedly.
+        // Nothing to do here. 'process.terminationHandler' should cleanup things.
       }
     }
   }
