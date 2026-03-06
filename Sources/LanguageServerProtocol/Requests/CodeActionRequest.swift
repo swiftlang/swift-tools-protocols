@@ -130,6 +130,18 @@ public struct CodeActionContext: Codable, Hashable, Sendable {
   }
 }
 
+/// Indicates that a code action is disabled and provides a human-readable
+/// reason why.
+public struct CodeActionDisabled: Codable, Hashable, Sendable {
+
+  /// Human readable description of why the code action is currently disabled.
+  public var reason: String
+
+  public init(reason: String) {
+    self.reason = reason
+  }
+}
+
 public struct CodeAction: ResponseType, Hashable {
 
   /// A short, human-readable, title for this code action.
@@ -141,6 +153,13 @@ public struct CodeAction: ResponseType, Hashable {
   /// The diagnostics that this code action resolves, if applicable.
   public var diagnostics: [Diagnostic]?
 
+  /// Marks this as a preferred action. Preferred actions are used by the
+  /// `auto fix` command and can be targeted by keybindings.
+  public var isPreferred: Bool?
+
+  /// Marks that the code action cannot currently be applied.
+  public var disabled: CodeActionDisabled?
+
   /// The workspace edit this code action performs.
   public var edit: WorkspaceEdit?
 
@@ -149,17 +168,27 @@ public struct CodeAction: ResponseType, Hashable {
   /// first the edit is executed and then the command.
   public var command: Command?
 
+  /// A data entry field that is preserved on a code action between
+  /// a `textDocument/codeAction` and a `codeAction/resolve` request.
+  public var data: LSPAny?
+
   public init(
     title: String,
     kind: CodeActionKind? = nil,
     diagnostics: [Diagnostic]? = nil,
+    isPreferred: Bool? = nil,
+    disabled: CodeActionDisabled? = nil,
     edit: WorkspaceEdit? = nil,
-    command: Command? = nil
+    command: Command? = nil,
+    data: LSPAny? = nil
   ) {
     self.title = title
     self.kind = kind
     self.diagnostics = diagnostics
+    self.isPreferred = isPreferred
+    self.disabled = disabled
     self.edit = edit
     self.command = command
+    self.data = data
   }
 }
