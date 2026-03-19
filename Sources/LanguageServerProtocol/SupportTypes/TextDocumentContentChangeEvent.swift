@@ -25,7 +25,7 @@ public struct TextDocumentContentChangeEvent: Codable, Hashable, Sendable {
   public var text: String
 
   public init(range: Range<Position>? = nil, rangeLength: Int? = nil, text: String) {
-    self._range = CustomCodable(wrappedValue: range)
+    self.range = range
     self.rangeLength = rangeLength
     self.text = text
   }

@@ -41,31 +41,4 @@ public struct Playground: ResponseType, Equatable, LSPAnyCodable {
     self.label = label
     self.location = location
   }
-
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    guard
-      case .string(let id) = dictionary["id"],
-      let location = Location(fromLSPAny: dictionary["location"])
-    else {
-      return nil
-    }
-    self.id = id
-    self.location = location
-    if case .string(let label) = dictionary["label"] {
-      self.label = label
-    }
-  }
-
-  public func encodeToLSPAny() -> LSPAny {
-    var dict: [String: LSPAny] = [
-      "id": .string(id),
-      "location": location.encodeToLSPAny(),
-    ]
-
-    if let label {
-      dict["label"] = .string(label)
-    }
-
-    return .dictionary(dict)
-  }
 }

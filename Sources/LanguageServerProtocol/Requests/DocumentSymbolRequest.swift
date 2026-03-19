@@ -114,8 +114,8 @@ public struct DocumentSymbol: Hashable, Codable, Sendable {
     self.kind = kind
     self.tags = tags
     self.deprecated = deprecated
-    self._range = CustomCodable<PositionRange>(wrappedValue: range)
-    self._selectionRange = CustomCodable<PositionRange>(wrappedValue: selectionRange)
+    self.range = range
+    self.selectionRange = selectionRange
     self.children = children
   }
 }

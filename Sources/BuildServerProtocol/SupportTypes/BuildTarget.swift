@@ -220,18 +220,4 @@ public struct SourceKitBuildTarget: LSPAnyCodable, Codable {
   public init(toolchain: URI? = nil) {
     self.toolchain = toolchain
   }
-
-  public init(fromLSPDictionary dictionary: [String: LanguageServerProtocol.LSPAny]) {
-    if case .string(let toolchain) = dictionary[CodingKeys.toolchain.stringValue] {
-      self.toolchain = try? URI(string: toolchain)
-    }
-  }
-
-  public func encodeToLSPAny() -> LanguageServerProtocol.LSPAny {
-    var result: [String: LSPAny] = [:]
-    if let toolchain {
-      result[CodingKeys.toolchain.stringValue] = .string(toolchain.stringValue)
-    }
-    return .dictionary(result)
-  }
 }

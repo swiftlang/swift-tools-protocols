@@ -30,6 +30,7 @@ public struct TextDocumentPlayground: ResponseType, Equatable, LSPAnyCodable {
   public var label: String?
 
   /// The full range of the #Playground macro body in the given file.
+  @CustomCodable<PositionRange>
   public var range: Range<Position>
 
   public init(
@@ -40,30 +41,5 @@ public struct TextDocumentPlayground: ResponseType, Equatable, LSPAnyCodable {
     self.id = id
     self.label = label
     self.range = range
-  }
-
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    guard
-      case .string(let id) = dictionary["id"],
-      let range = Range<Position>(fromLSPAny: dictionary["range"])
-    else {
-      return nil
-    }
-    self.id = id
-    self.range = range
-    if case .string(let label) = dictionary["label"] {
-      self.label = label
-    }
-  }
-
-  public func encodeToLSPAny() -> LSPAny {
-    var dict: [String: LSPAny] = [
-      "id": .string(id),
-      "range": range.encodeToLSPAny(),
-    ]
-    if let label {
-      dict["label"] = .string(label)
-    }
-    return .dictionary(dict)
   }
 }

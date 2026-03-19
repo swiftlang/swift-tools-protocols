@@ -64,7 +64,7 @@ public struct DocumentHighlight: ResponseType, Hashable {
   public var kind: DocumentHighlightKind?
 
   public init(range: Range<Position>, kind: DocumentHighlightKind?) {
-    self._range = CustomCodable<PositionRange>(wrappedValue: range)
+    self.range = range
     self.kind = kind
   }
 }

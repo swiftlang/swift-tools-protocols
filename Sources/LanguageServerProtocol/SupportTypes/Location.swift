@@ -33,30 +33,10 @@ public struct Location: ResponseType, Hashable, Codable, CustomDebugStringConver
 
   public init(uri: DocumentURI, range: Range<Position>) {
     self.uri = uri
-    self._range = CustomCodable<PositionRange>(wrappedValue: range)
-  }
-
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    guard
-      case .string(let uriString) = dictionary["uri"],
-      case .dictionary(let rangeDict) = dictionary["range"],
-      let uri = try? DocumentURI(string: uriString),
-      let range = Range<Position>(fromLSPDictionary: rangeDict)
-    else {
-      return nil
-    }
-    self.uri = uri
-    self._range = CustomCodable<PositionRange>(wrappedValue: range)
+    self.range = range
   }
 
   public var debugDescription: String {
     return "\(uri):\(range.lowerBound)-\(range.upperBound)"
-  }
-
-  public func encodeToLSPAny() -> LSPAny {
-    return .dictionary([
-      "uri": .string(uri.stringValue),
-      "range": range.encodeToLSPAny(),
-    ])
   }
 }

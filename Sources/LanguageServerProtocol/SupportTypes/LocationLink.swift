@@ -37,9 +37,9 @@ public struct LocationLink: Codable, Hashable, Sendable {
     targetRange: Range<Position>,
     targetSelectionRange: Range<Position>
   ) {
-    self._originSelectionRange = CustomCodable<PositionRange?>(wrappedValue: originSelectionRange)
+    self.originSelectionRange = originSelectionRange
     self.targetUri = targetUri
-    self._targetRange = CustomCodable<PositionRange>(wrappedValue: targetRange)
-    self._targetSelectionRange = CustomCodable<PositionRange>(wrappedValue: targetSelectionRange)
+    self.targetRange = targetRange
+    self.targetSelectionRange = targetSelectionRange
   }
 }

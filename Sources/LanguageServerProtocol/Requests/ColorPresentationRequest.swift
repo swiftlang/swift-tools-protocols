@@ -38,7 +38,7 @@ public struct ColorPresentationRequest: TextDocumentRequest, Hashable {
   public init(textDocument: TextDocumentIdentifier, color: Color, range: Range<Position>) {
     self.textDocument = textDocument
     self.color = color
-    self._range = CustomCodable<PositionRange>(wrappedValue: range)
+    self.range = range
   }
 }
 

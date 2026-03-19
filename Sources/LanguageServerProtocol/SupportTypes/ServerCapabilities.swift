@@ -431,22 +431,6 @@ public struct CompletionItemOptions: LSPAnyCodable, Codable, Hashable, Sendable 
   ) {
     self.labelDetailsSupport = labelDetailsSupport
   }
-
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    if case .bool(let labelDetailsSupport) = dictionary["labelDetailsSupport"] {
-      self.labelDetailsSupport = labelDetailsSupport
-    }
-  }
-
-  public func encodeToLSPAny() -> LSPAny {
-    var dict: [String: LSPAny] = [:]
-
-    if let labelDetailsSupport {
-      dict["labelDetailsSupport"] = .bool(labelDetailsSupport)
-    }
-
-    return .dictionary(dict)
-  }
 }
 
 public struct CompletionOptions: WorkDoneProgressOptions, Codable, LSPAnyCodable, Hashable, Sendable {
@@ -476,54 +460,6 @@ public struct CompletionOptions: WorkDoneProgressOptions, Codable, LSPAnyCodable
     self.allCommitCharacters = allCommitCharacters
     self.completionItem = completionItem
     self.workDoneProgress = workDoneProgress
-  }
-
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    if case .bool(let value) = dictionary["resolveProvider"] {
-      resolveProvider = value
-    }
-
-    if let arrayAny = dictionary["triggerCharacters"] {
-      triggerCharacters = [String](fromLSPArray: arrayAny)
-    }
-
-    if let arrayAny = dictionary["allCommitCharacters"] {
-      allCommitCharacters = [String](fromLSPArray: arrayAny)
-    }
-
-    if case .dictionary(let dict) = dictionary["completionItem"] {
-      completionItem = CompletionItemOptions(fromLSPDictionary: dict)
-    }
-
-    if case .bool(let value) = dictionary["workDoneProgress"] {
-      workDoneProgress = value
-    }
-  }
-
-  public func encodeToLSPAny() -> LSPAny {
-    var dict: [String: LSPAny] = [:]
-
-    if let resolveProvider {
-      dict["resolveProvider"] = .bool(resolveProvider)
-    }
-
-    if let triggerCharacters {
-      dict["triggerCharacters"] = triggerCharacters.encodeToLSPAny()
-    }
-
-    if let allCommitCharacters {
-      dict["allCommitCharacters"] = allCommitCharacters.encodeToLSPAny()
-    }
-
-    if let completionItem {
-      dict["completionItem"] = completionItem.encodeToLSPAny()
-    }
-
-    if let workDoneProgress {
-      dict["workDoneProgress"] = .bool(workDoneProgress)
-    }
-
-    return .dictionary(dict)
   }
 }
 
@@ -612,38 +548,6 @@ public struct SignatureHelpOptions: WorkDoneProgressOptions, Codable, Hashable, 
     self.triggerCharacters = triggerCharacters
     self.retriggerCharacters = retriggerCharacters
   }
-
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    if let arrayAny = dictionary["triggerCharacters"] {
-      triggerCharacters = [String](fromLSPArray: arrayAny)
-    }
-
-    if let arrayAny = dictionary["retriggerCharacters"] {
-      retriggerCharacters = [String](fromLSPArray: arrayAny)
-    }
-
-    if case .bool(let value) = dictionary["workDoneProgress"] {
-      workDoneProgress = value
-    }
-  }
-
-  public func encodeToLSPAny() -> LSPAny {
-    var dict: [String: LSPAny] = [:]
-
-    if let triggerCharacters {
-      dict["triggerCharacters"] = triggerCharacters.encodeToLSPAny()
-    }
-
-    if let retriggerCharacters {
-      dict["retriggerCharacters"] = retriggerCharacters.encodeToLSPAny()
-    }
-
-    if let workDoneProgress {
-      dict["workDoneProgress"] = .bool(workDoneProgress)
-    }
-
-    return .dictionary(dict)
-  }
 }
 
 public struct DocumentFilter: Codable, Hashable, Sendable {
@@ -671,41 +575,7 @@ public struct DocumentFilter: Codable, Hashable, Sendable {
   }
 }
 
-extension DocumentFilter: LSPAnyCodable {
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    if let languageValue = dictionary[CodingKeys.language.stringValue] {
-      guard case .string(let language) = languageValue else { return nil }
-      self.language = language
-    } else {
-      self.language = nil
-    }
-    if let schemeValue = dictionary[CodingKeys.scheme.stringValue] {
-      guard case .string(let scheme) = schemeValue else { return nil }
-      self.scheme = scheme
-    } else {
-      self.scheme = nil
-    }
-    if let patternValue = dictionary[CodingKeys.pattern.stringValue] {
-      guard case .string(let pattern) = patternValue else { return nil }
-      self.pattern = pattern
-    } else {
-      self.pattern = nil
-    }
-  }
-  public func encodeToLSPAny() -> LSPAny {
-    var dict = [String: LSPAny]()
-    if let language = language {
-      dict[CodingKeys.language.stringValue] = .string(language)
-    }
-    if let scheme = scheme {
-      dict[CodingKeys.scheme.stringValue] = .string(scheme)
-    }
-    if let pattern = pattern {
-      dict[CodingKeys.pattern.stringValue] = .string(pattern)
-    }
-    return .dictionary(dict)
-  }
-}
+extension DocumentFilter: LSPAnyCodable {}
 
 public typealias DocumentSelector = [DocumentFilter]
 
@@ -877,14 +747,6 @@ public struct SemanticTokensOptions: WorkDoneProgressOptions, Codable, Hashable,
     public init() {
       // Empty in the LSP 3.16 spec.
     }
-
-    public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-      self.init()
-    }
-
-    public func encodeToLSPAny() -> LSPAny {
-      .dictionary([:])
-    }
   }
 
   public struct SemanticTokensFullOptions: Equatable, Hashable, Codable, LSPAnyCodable, Sendable {
@@ -893,22 +755,6 @@ public struct SemanticTokensOptions: WorkDoneProgressOptions, Codable, Hashable,
 
     public init(delta: Bool? = nil) {
       self.delta = delta
-    }
-
-    public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-      self.delta = nil
-
-      if case .bool(let value) = dictionary["delta"] {
-        self.delta = value
-      }
-    }
-
-    public func encodeToLSPAny() -> LSPAny {
-      guard let delta else {
-        return .dictionary([:])
-      }
-
-      return .dictionary(["delta": .bool(delta)])
     }
   }
 
@@ -935,75 +781,6 @@ public struct SemanticTokensOptions: WorkDoneProgressOptions, Codable, Hashable,
     self.full = full
     self.workDoneProgress = workDoneProgress
   }
-
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    guard case .dictionary(let dict) = dictionary["legend"],
-      let legend = SemanticTokensLegend(fromLSPDictionary: dict)
-    else {
-      return nil
-    }
-
-    self.legend = legend
-
-    switch dictionary["range"] {
-    case .bool(let value):
-      self.range = .bool(value)
-    case .dictionary(let dict):
-      if let value = SemanticTokensRangeOptions(fromLSPDictionary: dict) {
-        self.range = .value(value)
-      }
-    default:
-      self.range = nil
-    }
-
-    switch dictionary["full"] {
-    case .bool(let value):
-      self.full = .bool(value)
-    case .dictionary(let dict):
-      if let value = SemanticTokensFullOptions(fromLSPDictionary: dict) {
-        self.full = .value(value)
-      }
-    default:
-      self.full = nil
-    }
-
-    if case .bool(let value) = dictionary["workDoneProgress"] {
-      self.workDoneProgress = value
-    }
-  }
-
-  public func encodeToLSPAny() -> LSPAny {
-    var dict: [String: LSPAny] = [:]
-
-    dict["legend"] = legend.encodeToLSPAny()
-
-    if let range {
-      dict["range"] =
-        switch range {
-        case .bool(let value):
-          .bool(value)
-        case .value(let rangeOptions):
-          rangeOptions.encodeToLSPAny()
-        }
-    }
-
-    if let full {
-      dict["full"] =
-        switch full {
-        case .bool(let value):
-          .bool(value)
-        case .value(let fullOptions):
-          fullOptions.encodeToLSPAny()
-        }
-    }
-
-    if let workDoneProgress {
-      dict["workDoneProgress"] = .bool(workDoneProgress)
-    }
-
-    return .dictionary(dict)
-  }
-
 }
 
 public struct InlayHintOptions: WorkDoneProgressOptions, Codable, Hashable, Sendable {
@@ -1093,51 +870,6 @@ public struct DiagnosticOptions: WorkDoneProgressOptions, LSPAnyCodable, Codable
     self.workspaceDiagnostics = workspaceDiagnostics
     self.id = id
     self.workDoneProgress = workDoneProgress
-  }
-
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    if case .string(let value) = dictionary["identifier"] {
-      self.identifier = value
-    }
-
-    guard case .bool(let interFileDependencies) = dictionary["interFileDependencies"] else {
-      return nil
-    }
-    self.interFileDependencies = interFileDependencies
-
-    guard case .bool(let workspaceDiagnostics) = dictionary["workspaceDiagnostics"] else {
-      return nil
-    }
-    self.workspaceDiagnostics = workspaceDiagnostics
-
-    if case .string(let value) = dictionary["id"] {
-      self.id = value
-    }
-
-    if case .bool(let value) = dictionary["workDoneProgress"] {
-      self.workDoneProgress = value
-    }
-  }
-
-  public func encodeToLSPAny() -> LSPAny {
-    var dict: [String: LSPAny] = [:]
-
-    if let identifier {
-      dict["identifier"] = .string(identifier)
-    }
-
-    dict["interFileDependencies"] = .bool(interFileDependencies)
-    dict["workspaceDiagnostics"] = .bool(workspaceDiagnostics)
-
-    if let id {
-      dict["id"] = .string(id)
-    }
-
-    if let workDoneProgress = workDoneProgress {
-      dict["workDoneProgress"] = .bool(workDoneProgress)
-    }
-
-    return .dictionary(dict)
   }
 }
 

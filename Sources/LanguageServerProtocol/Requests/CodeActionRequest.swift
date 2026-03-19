@@ -41,7 +41,7 @@ public struct CodeActionRequest: TextDocumentRequest, Hashable {
   public var context: CodeActionContext
 
   public init(range: Range<Position>, context: CodeActionContext, textDocument: TextDocumentIdentifier) {
-    self._range = CustomCodable<PositionRange>(wrappedValue: range)
+    self.range = range
     self.context = context
     self.textDocument = textDocument
   }

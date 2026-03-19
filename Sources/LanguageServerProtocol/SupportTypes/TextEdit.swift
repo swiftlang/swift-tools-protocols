@@ -21,32 +21,12 @@ public struct TextEdit: ResponseType, Hashable, Sendable {
   public var newText: String
 
   public init(range: Range<Position>, newText: String) {
-    self._range = CustomCodable<PositionRange>(wrappedValue: range)
+    self.range = range
     self.newText = newText
   }
 }
 
-extension TextEdit: LSPAnyCodable {
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    guard case .dictionary(let rangeDict) = dictionary[CodingKeys.range.stringValue],
-      case .string(let newText) = dictionary[CodingKeys.newText.stringValue]
-    else {
-      return nil
-    }
-    guard let range = Range<Position>(fromLSPDictionary: rangeDict) else {
-      return nil
-    }
-    self._range = CustomCodable<PositionRange>(wrappedValue: range)
-    self.newText = newText
-  }
-
-  public func encodeToLSPAny() -> LSPAny {
-    return .dictionary([
-      CodingKeys.range.stringValue: range.encodeToLSPAny(),
-      CodingKeys.newText.stringValue: .string(newText),
-    ])
-  }
-}
+extension TextEdit: LSPAnyCodable {}
 
 /// Additional information that describes document changes.
 public struct ChangeAnnotation: Codable, Hashable, Sendable {
@@ -88,7 +68,7 @@ public struct AnnotatedTextEdit: ResponseType, Hashable, Sendable {
   public var annotationId: ChangeAnnotationIdentifier
 
   public init(range: Range<Position>, newText: String, annotationId: ChangeAnnotationIdentifier) {
-    self._range = CustomCodable<PositionRange>(wrappedValue: range)
+    self.range = range
     self.newText = newText
     self.annotationId = annotationId
   }
