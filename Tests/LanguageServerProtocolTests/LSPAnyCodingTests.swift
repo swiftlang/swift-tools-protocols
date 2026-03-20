@@ -460,6 +460,55 @@ final class LSPAnyCodingTests: XCTestCase {
     XCTAssertEqual(Matrix(fromLSPAny: original.encodeToLSPAny()), original)
   }
 
+  // MARK: - LSPAny shortcut
+
+  private struct WithLSPAny: Codable, LSPAnyCodable, Equatable {
+    var name: String
+    var data: LSPAny
+  }
+
+  func testEncodeLSPAnyFieldPassesThroughDirectly() {
+    // An LSPAny field should be embedded as-is, not re-encoded through the machinery.
+    let cases: [LSPAny] = [
+      .null,
+      .bool(true),
+      .int(42),
+      .double(3.14),
+      .string("hello"),
+      .array([.int(1), .string("two")]),
+      .dictionary(["x": .int(0)]),
+    ]
+    for data in cases {
+      let lspAny = WithLSPAny(name: "test", data: data).encodeToLSPAny()
+      XCTAssertEqual(lspAny, .dictionary(["name": .string("test"), "data": data]))
+    }
+  }
+
+  func testDecodeLSPAnyFieldPassesThroughDirectly() {
+    // An LSPAny field should be returned as-is without re-decoding through the machinery.
+    let cases: [LSPAny] = [
+      .null,
+      .bool(false),
+      .int(-1),
+      .double(2.71),
+      .string("world"),
+      .array([.bool(true), .null]),
+      .dictionary(["a": .string("b")]),
+    ]
+    for data in cases {
+      let lspAny = LSPAny.dictionary(["name": .string("item"), "data": data])
+      XCTAssertEqual(WithLSPAny(fromLSPAny: lspAny), WithLSPAny(name: "item", data: data))
+    }
+  }
+
+  func testRoundtripLSPAnyField() {
+    let original = WithLSPAny(
+      name: "payload",
+      data: .dictionary(["nested": .array([.int(1), .null, .bool(true)])])
+    )
+    XCTAssertEqual(WithLSPAny(fromLSPAny: original.encodeToLSPAny()), original)
+  }
+
   // MARK: - Roundtrip
 
   func testRoundtripSimpleStruct() {

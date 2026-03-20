@@ -162,6 +162,9 @@ private final class LSPAnyEncoder: Encoder {
       reference.set(value: .double(Double(value)))
     }
     func encode<T: Encodable>(_ value: T) throws {
+      if let lspAny = value as? LSPAny {
+        return reference.set(value: lspAny)
+      }
       let encoder = LSPAnyEncoder(reference: reference, codingPath: codingPath)
       try value.encode(to: encoder)
     }
@@ -353,6 +356,9 @@ private final class LSPAnyDecoder: Decoder {
       return T.init(result)
     }
     func decode<T: Decodable>(_ type: T.Type) throws -> T {
+      if let lspAny = value as? T {
+        return lspAny
+      }
       let decoder = LSPAnyDecoder(value: value, codingPath: codingPath)
       return try T(from: decoder)
     }
