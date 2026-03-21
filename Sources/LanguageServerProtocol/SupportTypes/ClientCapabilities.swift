@@ -507,13 +507,57 @@ public struct TextDocumentClientCapabilities: Hashable, Codable, Sendable {
       }
     }
 
+    public struct ResolveSupportProperties: Hashable, Codable, Sendable {
+      /// The properties that a client can resolve lazily.
+      public var properties: [String]
+
+      public init(properties: [String]) {
+        self.properties = properties
+      }
+    }
+
     /// Whether the client supports dynamic registration of this request.
     public var dynamicRegistration: Bool?
 
     public var codeActionLiteralSupport: CodeActionLiteralSupport? = nil
 
-    public init(dynamicRegistration: Bool? = nil, codeActionLiteralSupport: CodeActionLiteralSupport? = nil) {
+    /// Whether code action supports the `isPreferred` property.
+    public var isPreferredSupport: Bool?
+
+    /// Whether code action supports the `disabled` property.
+    public var disabledSupport: Bool?
+
+    /// Whether code action supports the `data` property which is
+    /// preserved between a `textDocument/codeAction` and a
+    /// `codeAction/resolve` request.
+    public var dataSupport: Bool?
+
+    /// Whether the client supports resolving additional code action
+    /// properties via a separate `codeAction/resolve` request.
+    public var resolveSupport: ResolveSupportProperties?
+
+    /// Whether the client honors the change annotations in text edits
+    /// and resource operations returned via the `CodeAction#edit` property
+    /// by for example presenting the workspace edit in the user interface
+    /// and asking for confirmation.
+    public var honorsChangeAnnotations: Bool?
+
+    public init(
+      dynamicRegistration: Bool? = nil,
+      codeActionLiteralSupport: CodeActionLiteralSupport? = nil,
+      isPreferredSupport: Bool? = nil,
+      disabledSupport: Bool? = nil,
+      dataSupport: Bool? = nil,
+      resolveSupport: ResolveSupportProperties? = nil,
+      honorsChangeAnnotations: Bool? = nil
+    ) {
+      self.dynamicRegistration = dynamicRegistration
       self.codeActionLiteralSupport = codeActionLiteralSupport
+      self.isPreferredSupport = isPreferredSupport
+      self.disabledSupport = disabledSupport
+      self.dataSupport = dataSupport
+      self.resolveSupport = resolveSupport
+      self.honorsChangeAnnotations = honorsChangeAnnotations
     }
   }
 
