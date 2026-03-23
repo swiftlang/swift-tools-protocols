@@ -27,7 +27,7 @@ public typealias OriginId = String
 /// `prepareProvider: true` in `SourceKitInitializeBuildResponseData`.
 public struct BuildTargetPrepareRequest: BSPRequest, Hashable {
   public static let method: String = "buildTarget/prepare"
-  public typealias Response = VoidResponse
+  public typealias Response = BuildTargetPrepareResponse
 
   /// A list of build targets to prepare.
   public var targets: [BuildTargetIdentifier]
@@ -39,5 +39,18 @@ public struct BuildTargetPrepareRequest: BSPRequest, Hashable {
   public init(targets: [BuildTargetIdentifier], originId: OriginId? = nil) {
     self.targets = targets
     self.originId = originId
+  }
+}
+
+public struct BuildTargetPrepareResponse: ResponseType, Hashable {
+  /// Targets that were implicitly prepared by the prepare request.
+  ///
+  /// For example, a target may be implicitly prepared if one if its dependents gets prepared.
+  ///
+  /// When omitted, this is the same as an empty array.
+  public var implicitlyPreparedTargets: [BuildTargetIdentifier]?
+
+  public init(implicitlyPreparedTargets: [BuildTargetIdentifier]? = nil) {
+    self.implicitlyPreparedTargets = implicitlyPreparedTargets
   }
 }
