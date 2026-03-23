@@ -94,10 +94,12 @@ add_library(LanguageServerProtocol
   Requests/WillSaveWaitUntilTextDocumentRequest.swift
   Requests/WorkspaceDiagnosticsRequest.swift
   Requests/WorkspaceFoldersRequest.swift
+  Requests/WorkspacePlaygroundsRefreshRequest.swift
   Requests/WorkspacePlaygroundsRequest.swift
   Requests/WorkspaceSemanticTokensRefreshRequest.swift
   Requests/WorkspaceSymbolResolveRequest.swift
   Requests/WorkspaceSymbolsRequest.swift
+  Requests/WorkspaceTestsRefreshRequest.swift
   Requests/WorkspaceTestsRequest.swift
 
   SupportTypes/CallHierarchyItem.swift
