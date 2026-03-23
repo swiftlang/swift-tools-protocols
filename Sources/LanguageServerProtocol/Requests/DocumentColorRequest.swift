@@ -40,7 +40,7 @@ public struct ColorInformation: ResponseType, Hashable {
   public var color: Color
 
   public init(range: Range<Position>, color: Color) {
-    self._range = CustomCodable<PositionRange>(wrappedValue: range)
+    self.range = range
     self.color = color
   }
 }

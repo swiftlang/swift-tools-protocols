@@ -33,6 +33,6 @@ public struct InlayHintRequest: TextDocumentRequest, Hashable {
     range: Range<Position>? = nil
   ) {
     self.textDocument = textDocument
-    self._range = CustomCodable(wrappedValue: range)
+    self.range = range
   }
 }

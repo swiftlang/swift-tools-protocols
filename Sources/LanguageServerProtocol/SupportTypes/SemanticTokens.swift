@@ -31,29 +31,6 @@ public struct SemanticTokensLegend: Codable, Hashable, LSPAnyCodable, Sendable {
     self.tokenTypes = tokenTypes
     self.tokenModifiers = tokenModifiers
   }
-
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    self.tokenTypes = []
-    if let tokenTypesAny = dictionary["tokenTypes"],
-      let tokenTypes = [String](fromLSPArray: tokenTypesAny)
-    {
-      self.tokenTypes = tokenTypes
-    }
-
-    self.tokenModifiers = []
-    if let tokenModifiersAny = dictionary["tokenModifiers"],
-      let tokenModifiers = [String](fromLSPArray: tokenModifiersAny)
-    {
-      self.tokenModifiers = tokenModifiers
-    }
-  }
-
-  public func encodeToLSPAny() -> LSPAny {
-    .dictionary([
-      "tokenTypes": tokenTypes.encodeToLSPAny(),
-      "tokenModifiers": tokenModifiers.encodeToLSPAny(),
-    ])
-  }
 }
 
 /// The encoding format for semantic tokens. Currently only `relative` is supported.

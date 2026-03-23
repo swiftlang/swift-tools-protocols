@@ -73,6 +73,7 @@ public struct PositionRangeArray: CustomCodableWrapper {
   }
 }
 
+// TODO: Remove this extension after every clients migrated to `@CustomCodable<PositionRange>`.
 extension Range: LSPAnyCodable where Bound == Position {
   public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
     guard case .dictionary(let start)? = dictionary[PositionRange.CodingKeys.lowerBound.stringValue],

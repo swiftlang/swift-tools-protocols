@@ -85,7 +85,7 @@ public struct Diagnostic: Codable, Hashable, Sendable {
     data: LSPAny? = nil,
     codeActions: [CodeAction]? = nil
   ) {
-    self._range = CustomCodable<PositionRange>(wrappedValue: range)
+    self.range = range
     self.severity = severity
     self.code = code
     self.codeDescription = codeDescription

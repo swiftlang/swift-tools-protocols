@@ -21,20 +21,4 @@ public struct TextDocumentIdentifier: Hashable, Codable, Sendable {
   }
 }
 
-extension TextDocumentIdentifier: LSPAnyCodable {
-  public init?(fromLSPDictionary dictionary: [String: LSPAny]) {
-    guard case .string(let uriString)? = dictionary[CodingKeys.uri.stringValue] else {
-      return nil
-    }
-    guard let uri = try? DocumentURI(string: uriString) else {
-      return nil
-    }
-    self.uri = uri
-  }
-
-  public func encodeToLSPAny() -> LSPAny {
-    return .dictionary([
-      CodingKeys.uri.stringValue: .string(uri.stringValue)
-    ])
-  }
-}
+extension TextDocumentIdentifier: LSPAnyCodable {}

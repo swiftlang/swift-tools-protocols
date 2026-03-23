@@ -118,6 +118,7 @@ add_library(LanguageServerProtocol
   SupportTypes/LocationLink.swift
   SupportTypes/LocationsOrLocationLinksResponse.swift
   SupportTypes/LSPAny.swift
+  SupportTypes/LSPAny+Coding.swift
   SupportTypes/MarkupContent.swift
   SupportTypes/NotebookCellTextDocumentFilter.swift
   SupportTypes/NotebookDocument.swift

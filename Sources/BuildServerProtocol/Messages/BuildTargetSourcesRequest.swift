@@ -175,45 +175,4 @@ public struct SourceKitSourceItemData: LSPAnyCodable, Codable {
     self.outputPath = outputPath
     self.copyDestinations = copyDestinations
   }
-
-  public init?(fromLSPDictionary dictionary: [String: LanguageServerProtocol.LSPAny]) {
-    if case .string(let language) = dictionary[CodingKeys.language.stringValue] {
-      self.language = Language(rawValue: language)
-    }
-    if case .string(let rawKind) = dictionary[CodingKeys.kind.stringValue] {
-      self.kind = SourceKitSourceItemKind(rawValue: rawKind)
-    }
-    // Backwards compatibility for isHeader
-    if case .bool(let isHeader) = dictionary["isHeader"], isHeader {
-      self.kind = .header
-    }
-    if case .string(let outputFilePath) = dictionary[CodingKeys.outputPath.stringValue] {
-      self.outputPath = outputFilePath
-    }
-    if case .array(let copyDestinations) = dictionary[CodingKeys.copyDestinations.stringValue] {
-      self.copyDestinations = copyDestinations.compactMap { entry in
-        guard case .string(let copyDestination) = entry else {
-          return nil
-        }
-        return try? DocumentURI(string: copyDestination)
-      }
-    }
-  }
-
-  public func encodeToLSPAny() -> LanguageServerProtocol.LSPAny {
-    var result: [String: LSPAny] = [:]
-    if let language {
-      result[CodingKeys.language.stringValue] = .string(language.rawValue)
-    }
-    if let kind {
-      result[CodingKeys.kind.stringValue] = .string(kind.rawValue)
-    }
-    if let outputPath {
-      result[CodingKeys.outputPath.stringValue] = .string(outputPath)
-    }
-    if let copyDestinations {
-      result[CodingKeys.copyDestinations.stringValue] = .array(copyDestinations.map { .string($0.stringValue) })
-    }
-    return .dictionary(result)
-  }
 }

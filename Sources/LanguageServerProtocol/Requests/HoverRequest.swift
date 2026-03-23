@@ -51,7 +51,7 @@ public struct HoverResponse: ResponseType, Hashable {
 
   public init(contents: HoverResponseContents, range: Range<Position>?) {
     self.contents = contents
-    self._range = CustomCodable(wrappedValue: range)
+    self.range = range
   }
 }
 
