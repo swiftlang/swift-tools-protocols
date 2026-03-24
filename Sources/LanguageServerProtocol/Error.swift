@@ -106,6 +106,8 @@ public struct ResponseError: Error, Codable, Hashable {
 extension ResponseError {
   // MARK: Convenience properties for common errors.
 
+  public static let contentModified: ResponseError = ResponseError(code: .contentModified, message: "content modified")
+
   public static let cancelled: ResponseError = ResponseError(code: .cancelled, message: "request cancelled by client")
 
   public static let serverCancelled: ResponseError = ResponseError(
