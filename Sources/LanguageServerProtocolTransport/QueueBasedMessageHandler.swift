@@ -20,33 +20,31 @@ public import LanguageServerProtocol
 /// All of these could be requirements on `QueueBasedMessageHandler` but having them in a separate type means that
 /// types conforming to `QueueBasedMessageHandler` only have to have a single member and it also ensures that these
 /// fields are not accessible outside of the implementation of `QueueBasedMessageHandler`.
-public actor QueueBasedMessageHandlerHelper {
+public final class QueueBasedMessageHandlerHelper: Sendable {
+  private struct State {
+    /// The requests that we are currently handling.
+    ///
+    /// Used to cancel the tasks if the client requests cancellation. `cancellationError` is the error that should be
+    /// returned to the client if `task` is cancelled.
+    var inProgressRequestsByID: [RequestID: (task: Task<(), Never>, cancellationError: ResponseError?)] = [:]
+
+    /// Up to 10 request IDs that have recently finished.
+    ///
+    /// This is only used so we don't log an error when receiving a `CancelRequestNotification` for a request that has
+    /// just returned a response.
+    var recentlyFinishedRequests: [RequestID] = []
+  }
+
   /// The category in which signposts for message handling should be logged.
   fileprivate let signpostLoggingCategory: String
 
   /// Whether a new logging scope should be created when handling a notification / request.
   private let createLoggingScope: Bool
 
-  /// The queue on which we start and stop keeping track of cancellation.
-  ///
-  /// Having a queue for this ensures that we started keeping track of a
-  /// request's task before handling any cancellation request for it.
-  private let cancellationMessageHandlingQueue = AsyncQueue<Serial>()
-
   /// Notifications don't have an ID. This represents the next ID we can use to identify a notification.
   private let notificationIDForLogging = AtomicUInt32(initialValue: 1)
 
-  /// The requests that we are currently handling.
-  ///
-  /// Used to cancel the tasks if the client requests cancellation. `cancellationError` is the error that should be
-  /// returned to the client if `task` is cancelled.
-  private var inProgressRequestsByID: [RequestID: (task: Task<(), Never>, cancellationError: ResponseError?)] = [:]
-
-  /// Up to 10 request IDs that have recently finished.
-  ///
-  /// This is only used so we don't log an error when receiving a `CancelRequestNotification` for a request that has
-  /// just returned a response.
-  private var recentlyFinishedRequests: [RequestID] = []
+  private let state = ThreadSafeBox(initialValue: State())
 
   public init(signpostLoggingCategory: String, createLoggingScope: Bool) {
     self.signpostLoggingCategory = signpostLoggingCategory
@@ -59,59 +57,49 @@ public actor QueueBasedMessageHandlerHelper {
   /// implicitly cancel requests based on some criteria.
   ///
   /// `cancellationError` is the error that should be returned to the client for the cancelled request.
-  @_spi(SourceKitLSP) public nonisolated func cancelRequest(id: RequestID, error cancellationError: ResponseError) {
-    // Since the request is very cheap to execute and stops other requests
-    // from performing more work, we execute it with a high priority.
-    cancellationMessageHandlingQueue.async(priority: .high) {
-      await self.cancelRequestImpl(id: id, cancellationError: cancellationError)
-    }
-  }
-
-  private func cancelRequestImpl(id: RequestID, cancellationError: ResponseError) {
-    // Since the request is very cheap to execute and stops other requests
-    // from performing more work, we execute it with a high priority.
-    if let task = self.inProgressRequestsByID[id]?.task {
-      if self.inProgressRequestsByID[id]?.cancellationError == nil {
-        // If we already have a cancellation error, stick with that one instead of overriding it.
-        self.inProgressRequestsByID[id]?.cancellationError = cancellationError
+  @_spi(SourceKitLSP) public func cancelRequest(id: RequestID, error cancellationError: ResponseError) {
+    self.state.withLock { state in
+      if let task = state.inProgressRequestsByID[id]?.task {
+        if state.inProgressRequestsByID[id]?.cancellationError == nil {
+          // If we already have a cancellation error, stick with that one instead of overriding it.
+          state.inProgressRequestsByID[id]?.cancellationError = cancellationError
+        }
+        task.cancel()
+        return
       }
-      task.cancel()
-      return
-    }
-    if !self.recentlyFinishedRequests.contains(id) {
-      logger.error(
-        "Cannot cancel request \(id, privacy: .public) because it hasn't been scheduled for execution yet"
-      )
+      if !state.recentlyFinishedRequests.contains(id) {
+        logger.error(
+          "Cannot cancel request \(id, privacy: .public) because it hasn't been scheduled for execution yet"
+        )
+      }
     }
   }
 
   /// The error that should be returned to the client when the request with the given ID has ben cancelled by calling
   /// `cancelRequest(id:)`.
-  fileprivate func cancellationError(for id: RequestID) async -> ResponseError? {
-    // We don't need to hop onto `cancellationMessageHandlingQueue` here because we will have already set the
-    // `cancellationError` in `inProgressRequestsByID` before cancelling the `Task`.
-    self.inProgressRequestsByID[id]?.cancellationError
-  }
-
-  fileprivate nonisolated func setInProgressRequest(id: RequestID, request: some RequestType, task: Task<(), Never>?) {
-    self.cancellationMessageHandlingQueue.async(priority: .background) {
-      await self.setInProgressRequestImpl(id: id, request: request, task: task)
+  fileprivate func cancellationError(for id: RequestID) -> ResponseError? {
+    state.withLock { state in
+      // We don't need to hop onto `cancellationMessageHandlingQueue` here because we will have already set the
+      // `cancellationError` in `inProgressRequestsByID` before cancelling the `Task`.
+      state.inProgressRequestsByID[id]?.cancellationError
     }
   }
 
-  private func setInProgressRequestImpl(id: RequestID, request: some RequestType, task: Task<(), Never>?) {
-    if let task {
-      self.inProgressRequestsByID[id] = (task, nil)
-    } else {
-      self.inProgressRequestsByID[id] = nil
-      self.recentlyFinishedRequests.append(id)
-      while self.recentlyFinishedRequests.count > 10 {
-        self.recentlyFinishedRequests.removeFirst()
+  fileprivate func setInProgressRequest(id: RequestID, request: some RequestType, task: Task<(), Never>?) {
+    self.state.withLock { state in
+      if let task {
+        state.inProgressRequestsByID[id] = (task, nil)
+      } else {
+        state.inProgressRequestsByID[id] = nil
+        state.recentlyFinishedRequests.append(id)
+        while state.recentlyFinishedRequests.count > 10 {
+          state.recentlyFinishedRequests.removeFirst()
+        }
       }
     }
   }
 
-  fileprivate nonisolated func withNotificationLoggingScopeIfNecessary(_ body: () -> Void) {
+  fileprivate func withNotificationLoggingScopeIfNecessary(_ body: () -> Void) {
     guard createLoggingScope else {
       body()
       return
@@ -125,7 +113,7 @@ public actor QueueBasedMessageHandlerHelper {
     }
   }
 
-  fileprivate nonisolated func withRequestLoggingScopeIfNecessary(
+  fileprivate func withRequestLoggingScopeIfNecessary(
     id: RequestID,
     _ body: @Sendable () async -> Void
   ) async {
@@ -242,12 +230,10 @@ extension QueueBasedMessageHandler {
             case .success(let response):
               reply(.success(response))
             case .failure(let error as CancellationError):
-              Task {
-                guard let cancellationError = await self.messageHandlingHelper.cancellationError(for: id) else {
-                  return reply(.failure(ResponseError(error)))
-                }
-                reply(.failure(cancellationError))
+              guard let cancellationError = self.messageHandlingHelper.cancellationError(for: id) else {
+                return reply(.failure(ResponseError(error)))
               }
+              reply(.failure(cancellationError))
             case .failure(let error):
               reply(.failure(ResponseError(error)))
             }
