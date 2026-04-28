@@ -97,6 +97,8 @@ add_library(LanguageServerProtocol
   Requests/WorkspacePlaygroundsRefreshRequest.swift
   Requests/WorkspacePlaygroundsRequest.swift
   Requests/WorkspaceSemanticTokensRefreshRequest.swift
+  Requests/WorkspaceSymbolInfoRequest.swift
+  Requests/WorkspaceSymbolNamesRequest.swift
   Requests/WorkspaceSymbolResolveRequest.swift
   Requests/WorkspaceSymbolsRequest.swift
   Requests/WorkspaceTestsRefreshRequest.swift
