@@ -18,7 +18,7 @@
 ///
 /// **(LSP Extension)**.
 public struct SourceKitOptionsRequest: LSPRequest, Hashable {
-  public static let method: String = "workspace/_sourceKitOptions"
+  public static let method: String = "sourcekit/workspace/sourceKitOptions"
   public typealias Response = SourceKitOptionsResponse
 
   /// The document to get options for

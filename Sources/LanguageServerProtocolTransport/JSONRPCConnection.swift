@@ -433,7 +433,7 @@ public final class JSONRPCConnection: Connection {
     switch message {
     case .notification(let notification):
       notification._handle(receiveHandler)
-    case .request(let request, let id):
+    case .request(let request, _, let id):
       request._handle(receiveHandler, id: id) { (response, id) in
         self.sendReply(response, id: id)
       }
@@ -515,7 +515,7 @@ public final class JSONRPCConnection: Connection {
           message: "sourcekit-lsp failed to encode a notification to the editor"
         )
         return
-      case .request(_, _):
+      case .request(_, _, _):
         // We want to send a notification to the editor but failed to encode it. We don't know the `reply` handle for
         // the request at this point so we can't synthesize an errorResponse for the request. This means that the
         // request will never receive a reply. Inform the user about it.
@@ -621,6 +621,7 @@ public final class JSONRPCConnection: Connection {
   /// When the receiving end replies to the request, execute `reply` with the response.
   public func send<Request: RequestType>(
     _ request: Request,
+    method: String,
     id: RequestID,
     reply: @escaping @Sendable (LSPResult<Request.Response>) -> Void
   ) {
@@ -639,7 +640,7 @@ public final class JSONRPCConnection: Connection {
             logger.info(
               """
               Received reply for request \(id, privacy: .public) from \(self.name, privacy: .public)
-              \(Request.method, privacy: .public)
+              \(method, privacy: .public)
               \(response.forLogging)
               """
             )
@@ -647,7 +648,7 @@ public final class JSONRPCConnection: Connection {
             logger.error(
               """
               Received error for request \(id, privacy: .public) from \(self.name, privacy: .public)
-              \(Request.method, privacy: .public)
+              \(method, privacy: .public)
               \(error.forLogging)
               """
             )
@@ -661,8 +662,7 @@ public final class JSONRPCConnection: Connection {
         \(request.forLogging)
         """
       )
-
-      self.sendAssumingOnQueue(.request(request, id: id))
+      self.sendAssumingOnQueue(.request(request, method: method, id: id))
     }
   }
 

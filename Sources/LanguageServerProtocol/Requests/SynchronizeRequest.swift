@@ -27,7 +27,7 @@
 /// user a result based on the data that is available and (let the user) re-perform the action if the underlying index
 /// data has changed.
 public struct SynchronizeRequest: LSPRequest {
-  public static let method: String = "workspace/synchronize"
+  public static let method: String = "sourcekit/workspace/synchronize"
   public typealias Response = VoidResponse
 
   /// Wait for the build server to have an up-to-date build graph by sending a `workspace/waitForBuildSystemUpdates` to
