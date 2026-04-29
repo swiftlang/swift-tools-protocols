@@ -14,7 +14,7 @@
 ///
 /// **(LSP Extension)**
 public struct DocumentTestsRequest: TextDocumentRequest, Hashable {
-  public static let method: String = "textDocument/tests"
+  public static let method: String = "sourcekit/textDocument/tests"
   public typealias Response = [TestItem]
 
   public var textDocument: TextDocumentIdentifier

@@ -14,7 +14,7 @@
 ///
 /// **(LSP Extension)**
 public struct WorkspacePlaygroundsRequest: LSPRequest, Hashable {
-  public static let method: String = "workspace/playgrounds"
+  public static let method: String = "sourcekit/workspace/playgrounds"
   public typealias Response = [Playground]
 
   public init() {}

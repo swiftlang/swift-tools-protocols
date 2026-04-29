@@ -42,7 +42,22 @@ private let notificationTypes: [NotificationType.Type] = [
 
 extension MessageRegistry {
   public static let bspProtocol: MessageRegistry =
-    MessageRegistry(requests: requestTypes, notifications: notificationTypes)
+    MessageRegistry(requests: requestTypes, notifications: notificationTypes, legacyNames: bspLegacyNames)
+
+  /// Maps current `sourcekit/`-prefixed BSP method names to the legacy names used before the
+  /// prefix migration. Consumed by `MessageRegistry` (incoming routing) and
+  /// `LegacyNameFallbackConnection` (outgoing retries).
+  ///
+  /// This table is frozen. Do not add new entries for newly introduced methods.
+  public static let bspLegacyNames: [String: String] = [
+    BuildTargetPrepareRequest.method: "buildTarget/prepare",
+    FileOptionsChangedNotification.method: "build/sourceKitOptionsChanged",
+    TextDocumentSourceKitOptionsRequest.method: "textDocument/sourceKitOptions",
+    WorkspaceWaitForBuildSystemUpdatesRequest.method: "workspace/waitForBuildSystemUpdates",
+  ]
+  #if compiler(>=6.6)
+  #warning("Remove the legacy method names")
+  #endif
 }
 
 @available(*, deprecated, message: "use MessageRegistry.bspProtocol instead")

@@ -354,13 +354,14 @@ final class CodingTests: XCTestCase {
     decoder.userInfo = defaultCodingInfo
     let decodedValue = try decoder.decode(JSONRPCMessage.self, from: json.data(using: .utf8)!)
 
-    guard case JSONRPCMessage.request(let decodedValueOpaque, let decodedID) = decodedValue,
+    guard case JSONRPCMessage.request(let decodedValueOpaque, let decodedMethod, let decodedID) = decodedValue,
       let decodedRequest = decodedValueOpaque as? ShutdownRequest
     else {
       XCTFail("decodedValue \(decodedValue) is not a ShutdownRequest")
       return
     }
 
+    XCTAssertEqual(ShutdownRequest.method, decodedMethod)
     XCTAssertEqual(.number(1), decodedID, "expected request ID 1")
     XCTAssertEqual(ShutdownRequest(), decodedRequest)
   }
@@ -377,14 +378,21 @@ private func checkMessageCoding<Request: RequestType & Equatable>(
   file: StaticString = #filePath,
   line: UInt = #line
 ) {
-  checkCoding(JSONRPCMessage.request(value, id: id), json: json, userInfo: defaultCodingInfo, file: file, line: line) {
-    guard case JSONRPCMessage.request(let decodedValueOpaque, let decodedID) = $0,
+  checkCoding(
+    JSONRPCMessage.request(value, method: Request.method, id: id),
+    json: json,
+    userInfo: defaultCodingInfo,
+    file: file,
+    line: line
+  ) {
+    guard case JSONRPCMessage.request(let decodedValueOpaque, let decodedMethod, let decodedID) = $0,
       let decodedValue = decodedValueOpaque as? Request
     else {
       XCTFail("decodedValue \($0) does not match expected \(value)", file: file, line: line)
       return
     }
 
+    XCTAssertEqual(Request.method, decodedMethod, "method decoding", file: file, line: line)
     XCTAssertEqual(id, decodedID, "requestID decoding", file: file, line: line)
     XCTAssertEqual(value, decodedValue, file: file, line: line)
   }

@@ -14,7 +14,7 @@
 //
 /// Any options not specified in this request will be left as-is.
 public struct SetOptionsRequest: LSPRequest {
-  public static let method: String = "workspace/_setOptions"
+  public static let method: String = "sourcekit/workspace/setOptions"
   public typealias Response = VoidResponse
 
   /// `true` to pause background indexing or `false` to resume background indexing.

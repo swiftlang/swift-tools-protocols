@@ -15,7 +15,7 @@ public import LanguageServerProtocol
 
 @_spi(Testing) @frozen public enum JSONRPCMessage {
   case notification(NotificationType)
-  case request(_RequestType, id: RequestID)
+  case request(_RequestType, method: String, id: RequestID)
   case response(ResponseType, id: RequestID)
   case errorResponse(ResponseError, id: RequestID?)
 }
@@ -81,7 +81,7 @@ extension JSONRPCMessage: Codable {
 
         let params = try messageType.init(from: container.superDecoder(forKey: .params))
 
-        self = .request(params, id: id)
+        self = .request(params, method: method, id: id)
 
       case (let id?, nil, true, nil):
         msgKind = .response
@@ -148,8 +148,8 @@ extension JSONRPCMessage: Codable {
       try container.encode(type(of: params).method, forKey: .method)
       try params.encode(to: container.superEncoder(forKey: .params))
 
-    case .request(let params, let id):
-      try container.encode(type(of: params).method, forKey: .method)
+    case .request(let params, let method, let id):
+      try container.encode(method, forKey: .method)
       try container.encode(id, forKey: .id)
       try params.encode(to: container.superEncoder(forKey: .params))
 

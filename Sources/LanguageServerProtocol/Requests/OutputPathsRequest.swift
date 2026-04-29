@@ -15,7 +15,7 @@
 ///
 /// **(LSP Extension)**.
 public struct OutputPathsRequest: LSPRequest, Hashable {
-  public static let method: String = "workspace/_outputPaths"
+  public static let method: String = "sourcekit/workspace/outputPaths"
   public typealias Response = OutputPathsResponse
 
   /// The target whose output file paths to get.

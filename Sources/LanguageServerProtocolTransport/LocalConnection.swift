@@ -105,6 +105,7 @@ public final class LocalConnection: Connection, Sendable {
 
   public func send<Request: RequestType>(
     _ request: Request,
+    method: String,
     id: RequestID,
     reply: @Sendable @escaping (LSPResult<Request.Response>) -> Void
   ) {

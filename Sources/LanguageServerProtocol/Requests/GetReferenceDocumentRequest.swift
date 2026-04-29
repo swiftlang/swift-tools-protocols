@@ -24,7 +24,7 @@
 /// Enable the experimental client capability `"workspace/getReferenceDocument"` so that the server responds with
 /// reference document URLs for certain requests or commands whenever possible.
 public struct GetReferenceDocumentRequest: LSPRequest {
-  public static let method: String = "workspace/getReferenceDocument"
+  public static let method: String = "sourcekit/workspace/getReferenceDocument"
   public typealias Response = GetReferenceDocumentResponse
 
   public var uri: DocumentURI
