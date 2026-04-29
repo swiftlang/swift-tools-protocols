@@ -19,7 +19,7 @@
 ///
 /// **(LSP Extension)**
 public struct WorkspaceTestsRefreshRequest: LSPRequest {
-  public static let method: String = "workspace/tests/refresh"
+  public static let method: String = "sourcekit/workspace/tests/refresh"
   public typealias Response = VoidResponse
 
   public init() {}

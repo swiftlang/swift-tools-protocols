@@ -97,6 +97,7 @@ var targets: [Target] = [
     dependencies: [
       "LanguageServerProtocolTransport",
       "SKLogging",
+      "ToolsProtocolsSwiftExtensions",
       "ToolsProtocolsTestSupport",
     ],
     swiftSettings: globalSwiftSettings

@@ -19,7 +19,7 @@
 ///
 /// **(LSP Extension)**
 public struct WorkspacePlaygroundsRefreshRequest: LSPRequest {
-  public static let method: String = "workspace/playgrounds/refresh"
+  public static let method: String = "sourcekit/workspace/playgrounds/refresh"
   public typealias Response = VoidResponse
 
   public init() {}
