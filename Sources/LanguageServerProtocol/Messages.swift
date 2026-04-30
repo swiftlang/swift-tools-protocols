@@ -132,7 +132,33 @@ public let builtinNotifications: [NotificationType.Type] = [
 
 extension MessageRegistry {
   public static let lspProtocol: MessageRegistry =
-    MessageRegistry(requests: builtinRequests, notifications: builtinNotifications)
+    MessageRegistry(requests: builtinRequests, notifications: builtinNotifications, legacyNames: lspLegacyNames)
+
+  /// Maps current `sourcekit/`-prefixed method names to the legacy names used before the prefix
+  /// migration. Consumed by `MessageRegistry` (incoming routing) and `LegacyNameFallbackConnection`
+  /// (outgoing retries).
+  ///
+  /// This table is frozen. Do not add new entries for newly introduced methods.
+  public static let lspLegacyNames: [String: String] = [
+    DidChangeActiveDocumentNotification.method: "window/didChangeActiveDocument",
+    DoccDocumentationRequest.method: "textDocument/doccDocumentation",
+    DocumentTestsRequest.method: "textDocument/tests",
+    GetReferenceDocumentRequest.method: "workspace/getReferenceDocument",
+    IsIndexingRequest.method: "sourceKit/_isIndexing",
+    OutputPathsRequest.method: "workspace/_outputPaths",
+    PeekDocumentsRequest.method: "workspace/peekDocuments",
+    SetOptionsRequest.method: "workspace/_setOptions",
+    SourceKitOptionsRequest.method: "workspace/_sourceKitOptions",
+    SynchronizeRequest.method: "workspace/synchronize",
+    TriggerReindexRequest.method: "workspace/triggerReindex",
+    WorkspacePlaygroundsRefreshRequest.method: "workspace/playgrounds/refresh",
+    WorkspacePlaygroundsRequest.method: "workspace/playgrounds",
+    WorkspaceTestsRefreshRequest.method: "workspace/tests/refresh",
+    WorkspaceTestsRequest.method: "workspace/tests",
+  ]
+  #if compiler(>=6.6)
+  #warning("Remove the legacy method names")
+  #endif
 }
 
 // MARK: Miscellaneous Message Types

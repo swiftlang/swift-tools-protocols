@@ -4,6 +4,7 @@ add_library(LanguageServerProtocolTransport
   DisableSigpipe.swift
   DocumentURI+CustomLogStringConvertible.swift
   JSONRPCConnection.swift
+  LegacyNameFallbackConnection.swift
   LocalConnection.swift
   LoggableMessageTypes.swift
   MessageCoding.swift

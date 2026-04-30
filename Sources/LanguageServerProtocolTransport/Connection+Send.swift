@@ -14,11 +14,13 @@ public import LanguageServerProtocol
 @_spi(SourceKitLSP) private import ToolsProtocolsSwiftExtensions
 
 extension Connection {
-  public func send<R: RequestType>(_ request: R) async throws -> R.Response {
+  public func send<R: RequestType>(_ request: R, method: String = R.method) async throws -> R.Response {
     return try await withCancellableCheckedThrowingContinuation { continuation in
-      return self.send(request) { result in
+      let id = self.nextRequestID()
+      self.send(request, method: method, id: id) { result in
         continuation.resume(with: result)
       }
+      return id
     } cancel: { requestID in
       self.send(CancelRequestNotification(id: requestID))
     }

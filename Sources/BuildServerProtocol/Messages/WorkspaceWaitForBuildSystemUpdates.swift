@@ -19,7 +19,7 @@ public import LanguageServerProtocol
 public struct WorkspaceWaitForBuildSystemUpdatesRequest: BSPRequest, Hashable {
   public typealias Response = VoidResponse
 
-  public static let method: String = "workspace/waitForBuildSystemUpdates"
+  public static let method: String = "sourcekit/workspace/waitForBuildSystemUpdates"
 
   public init() {}
 }

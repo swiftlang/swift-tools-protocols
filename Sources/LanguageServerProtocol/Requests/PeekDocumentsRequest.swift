@@ -29,7 +29,7 @@
 /// It requires the experimental client capability `"workspace/peekDocuments"` to use.
 /// It also needs the client to handle the request and present the "peeked" editor.
 public struct PeekDocumentsRequest: LSPRequest {
-  public static let method: String = "workspace/peekDocuments"
+  public static let method: String = "sourcekit/workspace/peekDocuments"
   public typealias Response = PeekDocumentsResponse
 
   public var uri: DocumentURI

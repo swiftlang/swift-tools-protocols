@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 public struct IsIndexingRequest: LSPRequest {
-  public static let method: String = "sourceKit/_isIndexing"
+  public static let method: String = "sourcekit/isIndexing"
   public typealias Response = IsIndexingResponse
 
   public init() {}

@@ -14,9 +14,26 @@ public final class MessageRegistry: Sendable {
   private let methodToRequest: [String: _RequestType.Type]
   private let methodToNotification: [String: NotificationType.Type]
 
-  public init(requests: [_RequestType.Type], notifications: [NotificationType.Type]) {
-    self.methodToRequest = Dictionary(uniqueKeysWithValues: requests.map { ($0.method, $0) })
-    self.methodToNotification = Dictionary(uniqueKeysWithValues: notifications.map { ($0.method, $0) })
+  public init(
+    requests: [_RequestType.Type],
+    notifications: [NotificationType.Type],
+    legacyNames: [String: String] = [:]
+  ) {
+    var methodToRequest: [String: _RequestType.Type] = Dictionary(
+      uniqueKeysWithValues: requests.map { ($0.method, $0) }
+    )
+    for request in requests {
+      if let legacy = legacyNames[request.method] { methodToRequest[legacy] = request }
+    }
+    self.methodToRequest = methodToRequest
+
+    var methodToNotification: [String: NotificationType.Type] = Dictionary(
+      uniqueKeysWithValues: notifications.map { ($0.method, $0) }
+    )
+    for notification in notifications {
+      if let legacy = legacyNames[notification.method] { methodToNotification[legacy] = notification }
+    }
+    self.methodToNotification = methodToNotification
   }
 
   /// Returns the type of the message named `method`, or nil if it is unknown.
