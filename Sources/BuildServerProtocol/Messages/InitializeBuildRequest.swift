@@ -82,9 +82,13 @@ public struct BuildClientCapabilities: Codable, Hashable, Sendable {
   /// it's safe to return classpath in ScalacOptionsItem empty. */
   public var jvmCompileClasspathReceiver: Bool?
 
-  public init(languageIds: [Language], jvmCompileClasspathReceiver: Bool? = nil) {
+  /// Experimental client capabilities.
+  public var experimental: LSPAny?
+
+  public init(languageIds: [Language], jvmCompileClasspathReceiver: Bool? = nil, experimental: LSPAny? = nil) {
     self.languageIds = languageIds
     self.jvmCompileClasspathReceiver = jvmCompileClasspathReceiver
+    self.experimental = experimental
   }
 }
 
