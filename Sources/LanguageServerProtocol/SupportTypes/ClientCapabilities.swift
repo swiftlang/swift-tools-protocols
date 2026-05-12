@@ -100,14 +100,52 @@ public struct WorkspaceClientCapabilities: Hashable, Codable, Sendable {
       }
     }
 
+    /// The tags supported by the client for `workspace/symbol`.
+    public struct TagSupport: Hashable, Codable, Sendable {
+      /// The tags supported by the client.
+      public var valueSet: [SymbolTag]
+
+      public init(valueSet: [SymbolTag]) {
+        self.valueSet = valueSet
+      }
+    }
+
+    /// Properties the client can resolve lazily via `workspaceSymbol/resolve`.
+    public struct ResolveSupport: Hashable, Codable, Sendable {
+      /// The properties that a client can resolve lazily. Usually `"location.range"`.
+      public var properties: [String]
+
+      public init(properties: [String]) {
+        self.properties = properties
+      }
+    }
+
     /// Whether the client supports dynamic registration of this request.
     public var dynamicRegistration: Bool? = nil
 
     public var symbolKind: SymbolKindValueSet? = nil
 
-    public init(dynamicRegistration: Bool? = nil, symbolKind: SymbolKindValueSet? = nil) {
+    /// The client supports tags on `SymbolInformation` and `WorkspaceSymbol`.
+    /// Clients supporting tags have to handle unknown tags gracefully.
+    ///
+    /// Since LSP 3.16.
+    public var tagSupport: TagSupport? = nil
+
+    /// The client supports lazy resolution of `WorkspaceSymbol` properties via `workspaceSymbol/resolve`.
+    ///
+    /// Since LSP 3.17.
+    public var resolveSupport: ResolveSupport? = nil
+
+    public init(
+      dynamicRegistration: Bool? = nil,
+      symbolKind: SymbolKindValueSet? = nil,
+      tagSupport: TagSupport? = nil,
+      resolveSupport: ResolveSupport? = nil
+    ) {
       self.dynamicRegistration = dynamicRegistration
       self.symbolKind = symbolKind
+      self.tagSupport = tagSupport
+      self.resolveSupport = resolveSupport
     }
   }
 
