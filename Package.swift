@@ -207,9 +207,9 @@ if buildOnlyTests {
 let package = Package(
   name: "swift-tools-protocols",
   platforms: [
-    .macOS(.v14),
-    .iOS(.v17),
-    .macCatalyst(.v17),
+    .macOS(.v15),
+    .iOS(.v18),
+    .macCatalyst(.v18),
   ],
   products: products,
   dependencies: dependencies,
