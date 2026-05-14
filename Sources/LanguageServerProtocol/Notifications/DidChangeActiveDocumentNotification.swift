@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 public struct DidChangeActiveDocumentNotification: LSPNotification {
-  public static let method: String = "window/didChangeActiveDocument"
+  public static let method: String = "sourcekit/window/didChangeActiveDocument"
 
   /// The document that is being displayed in the active editor  or `null` to indicate that either no document is active
   /// or that the currently open document is not handled by SourceKit-LSP.

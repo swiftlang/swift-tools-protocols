@@ -44,7 +44,7 @@
 /// This request is an extension to LSP supported by SourceKit-LSP.
 /// The client is expected to display the documentation in an editor using swift-docc-render.
 public struct DoccDocumentationRequest: TextDocumentRequest, Hashable {
-  public static let method: String = "textDocument/doccDocumentation"
+  public static let method: String = "sourcekit/textDocument/doccDocumentation"
   public typealias Response = DoccDocumentationResponse
 
   /// The document in which to lookup the symbol location.

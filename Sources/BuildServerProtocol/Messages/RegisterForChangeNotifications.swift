@@ -57,7 +57,7 @@ public struct FileOptionsChangedNotification: BSPNotification {
     public var workingDirectory: String?
   }
 
-  public static let method: String = "build/sourceKitOptionsChanged"
+  public static let method: String = "sourcekit/build/sourceKitOptionsChanged"
 
   /// The URI of the document that has changed settings.
   public var uri: URI
