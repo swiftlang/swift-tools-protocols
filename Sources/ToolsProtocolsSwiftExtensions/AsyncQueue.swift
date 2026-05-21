@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
+import Synchronization
 
 /// Abstraction layer so we can store a heterogeneous collection of tasks in an
 /// array.
@@ -49,35 +50,10 @@ package struct PendingTask<TaskMetadata: Sendable & Hashable>: Sendable {
   fileprivate let id: UUID
 }
 
-/// A list of pending tasks that can be sent across actor boundaries and is guarded by a lock.
-///
-/// - Note: Unchecked sendable because the tasks are being protected by a lock.
-private final class PendingTasks<TaskMetadata: Sendable & Hashable>: Sendable {
-  ///  Lock guarding `pendingTasks`.
-  private let lock = NSLock()
-
-  /// Pending tasks that have not finished execution yet.
-  ///
-  /// - Important: This must only be accessed while `lock` has been acquired.
-  private nonisolated(unsafe) var tasksByMetadata: [TaskMetadata: [PendingTask<TaskMetadata>]] = [:]
-
-  init() {
-    self.lock.name = "AsyncQueue"
-  }
-
-  /// Capture a lock and execute the closure, which may modify the pending tasks.
-  func withLock<T>(
-    _ body: (_ tasksByMetadata: inout [TaskMetadata: [PendingTask<TaskMetadata>]]) throws -> T
-  ) rethrows -> T {
-    try lock.withLock {
-      try body(&tasksByMetadata)
-    }
-  }
-}
-
 /// A queue that allows the execution of asynchronous blocks of code.
 public final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
-  private let pendingTasks: PendingTasks<TaskMetadata> = PendingTasks()
+  /// Pending tasks that have not finished execution yet, guarded by a mutex.
+  private let pendingTasks = Mutex<[TaskMetadata: [PendingTask<TaskMetadata>]]>([:])
 
   public init() {}
 
@@ -147,13 +123,13 @@ public final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
       }
 
       // Schedule the task.
-      let task = Task(priority: priority) { [pendingTasks] in
+      let task = Task(priority: priority) {
         // IMPORTANT: The only throwing call in here must be the call to
         // operation. Otherwise the assumption that the task will never throw
         // if `operation` does not throw, which we are making in `async` does
         // not hold anymore.
         defer {
-          pendingTasks.withLock { tasksByMetadata in
+          self.pendingTasks.withLock { tasksByMetadata in
             tasksByMetadata[metadata, default: []].removeAll(where: { $0.id == id })
             if tasksByMetadata[metadata]?.isEmpty ?? false {
               tasksByMetadata[metadata] = nil
