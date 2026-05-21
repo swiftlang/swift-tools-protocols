@@ -36,7 +36,7 @@ public final class LoggingScope {
     } else if let defaultSubsystem = defaultSubsystem.value {
       return defaultSubsystem
     } else {
-      if !hasLoggedNoSubsystemConfiguredFault.exchange(true, ordering: .sequentiallyConsistent) {
+      if !hasLoggedNoSubsystemConfiguredFault.exchange(true, ordering: .relaxed) {
         Logger(subsystem: "default", category: "sklogging")
           .fault(
             """

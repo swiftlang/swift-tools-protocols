@@ -108,7 +108,7 @@ public final class QueueBasedMessageHandlerHelper: Sendable {
     // Only use the last two digits of the notification ID for the logging scope to avoid creating too many scopes.
     // See comment in `withLoggingScope`.
     // The last 2 digits should be sufficient to differentiate between multiple concurrently running notifications.
-    let notificationID = notificationIDForLogging.wrappingAdd(1, ordering: .sequentiallyConsistent).oldValue
+    let notificationID = notificationIDForLogging.wrappingAdd(1, ordering: .relaxed).oldValue
     withLoggingScope("notification-\(notificationID % 100)") {
       body()
     }

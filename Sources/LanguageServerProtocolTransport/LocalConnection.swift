@@ -88,7 +88,7 @@ public final class LocalConnection: Connection, Sendable {
   }
 
   public func nextRequestID() -> RequestID {
-    return .string("sk-\(_nextRequestID.wrappingAdd(1, ordering: .sequentiallyConsistent).oldValue)")
+    return .string("sk-\(_nextRequestID.wrappingAdd(1, ordering: .relaxed).oldValue)")
   }
 
   public func send<Notification: NotificationType>(_ notification: Notification) {

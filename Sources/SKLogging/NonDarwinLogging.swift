@@ -448,7 +448,7 @@ private let nextSignpostID = Atomic<UInt32>(0)
   }
 
   @_spi(SourceKitLSP) public func makeSignpostID() -> NonDarwinSignpostID {
-    return NonDarwinSignpostID(id: nextSignpostID.wrappingAdd(1, ordering: .sequentiallyConsistent).oldValue)
+    return NonDarwinSignpostID(id: nextSignpostID.wrappingAdd(1, ordering: .relaxed).oldValue)
   }
 
   @_spi(SourceKitLSP) public func beginInterval(

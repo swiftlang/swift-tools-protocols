@@ -31,12 +31,12 @@ public final class RequestAndReply<Params: RequestType>: Sendable {
   }
 
   deinit {
-    precondition(replied.load(ordering: .sequentiallyConsistent), "request never received a reply")
+    precondition(replied.load(ordering: .acquiring), "request never received a reply")
   }
 
   /// Call the `replyBlock` with the result produced by the given closure.
   public func reply(_ body: () async throws -> Params.Response) async {
-    let didReply = replied.exchange(true, ordering: .sequentiallyConsistent)
+    let didReply = replied.exchange(true, ordering: .acquiringAndReleasing)
     precondition(!didReply, "replied to request more than once")
     do {
       reply(.success(try await body()))

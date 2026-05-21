@@ -598,7 +598,7 @@ public final class JSONRPCConnection: Connection {
 
   /// Request id for the next outgoing request.
   public func nextRequestID() -> RequestID {
-    return .string("sk-\(nextRequestIDStorage.wrappingAdd(1, ordering: .sequentiallyConsistent).oldValue)")
+    return .string("sk-\(nextRequestIDStorage.wrappingAdd(1, ordering: .relaxed).oldValue)")
   }
 
   // MARK: Connection interface
