@@ -13,6 +13,7 @@
 import Foundation
 public import LanguageServerProtocol
 @_spi(SourceKitLSP) import SKLogging
+import Synchronization
 @_spi(SourceKitLSP) public import ToolsProtocolsSwiftExtensions
 
 /// Side structure in which `QueueBasedMessageHandler` can keep track of active requests etc.
@@ -42,7 +43,7 @@ public final class QueueBasedMessageHandlerHelper: Sendable {
   private let createLoggingScope: Bool
 
   /// Notifications don't have an ID. This represents the next ID we can use to identify a notification.
-  private let notificationIDForLogging = AtomicUInt32(initialValue: 1)
+  private let notificationIDForLogging = Atomic<UInt32>(1)
 
   private let state = ThreadSafeBox(initialValue: State())
 
@@ -107,7 +108,7 @@ public final class QueueBasedMessageHandlerHelper: Sendable {
     // Only use the last two digits of the notification ID for the logging scope to avoid creating too many scopes.
     // See comment in `withLoggingScope`.
     // The last 2 digits should be sufficient to differentiate between multiple concurrently running notifications.
-    let notificationID = notificationIDForLogging.fetchAndIncrement()
+    let notificationID = notificationIDForLogging.wrappingAdd(1, ordering: .sequentiallyConsistent).oldValue
     withLoggingScope("notification-\(notificationID % 100)") {
       body()
     }

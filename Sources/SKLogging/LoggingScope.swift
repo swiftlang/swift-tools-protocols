@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
+import Synchronization
 @_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 
 public final class LoggingScope {
@@ -20,7 +21,7 @@ public final class LoggingScope {
 
   /// Whether we have logged a fault that `subsystem` has been accessed without calling
   /// `configureDefaultLoggingSubsystem` first.
-  private static let hasLoggedNoSubsystemConfiguredFault = AtomicBool(initialValue: false)
+  private static let hasLoggedNoSubsystemConfiguredFault = Atomic<Bool>(false)
 
   /// The name of the current logging subsystem or `nil` if no logging scope is set.
   @TaskLocal fileprivate static var _subsystem: String?
@@ -35,7 +36,7 @@ public final class LoggingScope {
     } else if let defaultSubsystem = defaultSubsystem.value {
       return defaultSubsystem
     } else {
-      if !hasLoggedNoSubsystemConfiguredFault.setAndGet(newValue: true) {
+      if !hasLoggedNoSubsystemConfiguredFault.exchange(true, ordering: .sequentiallyConsistent) {
         Logger(subsystem: "default", category: "sklogging")
           .fault(
             """

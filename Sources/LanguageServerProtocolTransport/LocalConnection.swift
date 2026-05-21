@@ -14,6 +14,7 @@ import Dispatch
 import Foundation
 public import LanguageServerProtocol
 @_spi(SourceKitLSP) import SKLogging
+import Synchronization
 @_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 
 /// A connection between two message handlers in the same process.
@@ -39,7 +40,7 @@ public final class LocalConnection: Connection, Sendable {
   /// The queue guarding `_nextRequestID`.
   private let queue: DispatchQueue = DispatchQueue(label: "local-connection-queue")
 
-  private let _nextRequestID = AtomicUInt32(initialValue: 0)
+  private let _nextRequestID = Atomic<UInt32>(0)
 
   /// - Important: Must only be accessed from `queue`
   nonisolated(unsafe) private var state: State = .ready
@@ -87,7 +88,7 @@ public final class LocalConnection: Connection, Sendable {
   }
 
   public func nextRequestID() -> RequestID {
-    return .string("sk-\(_nextRequestID.fetchAndIncrement())")
+    return .string("sk-\(_nextRequestID.wrappingAdd(1, ordering: .sequentiallyConsistent).oldValue)")
   }
 
   public func send<Notification: NotificationType>(_ notification: Notification) {

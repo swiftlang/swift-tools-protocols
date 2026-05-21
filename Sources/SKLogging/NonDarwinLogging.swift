@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Synchronization
 @_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 
 #if canImport(Darwin)
@@ -434,7 +435,7 @@ public struct NonDarwinLogger: Sendable {
   fileprivate let id: NonDarwinSignpostID
 }
 
-private let nextSignpostID = AtomicUInt32(initialValue: 0)
+private let nextSignpostID = Atomic<UInt32>(0)
 
 /// A type that is API-compatible to `OSLogMessage` for all uses within sourcekit-lsp.
 ///
@@ -447,7 +448,7 @@ private let nextSignpostID = AtomicUInt32(initialValue: 0)
   }
 
   @_spi(SourceKitLSP) public func makeSignpostID() -> NonDarwinSignpostID {
-    return NonDarwinSignpostID(id: nextSignpostID.fetchAndIncrement())
+    return NonDarwinSignpostID(id: nextSignpostID.wrappingAdd(1, ordering: .sequentiallyConsistent).oldValue)
   }
 
   @_spi(SourceKitLSP) public func beginInterval(
