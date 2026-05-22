@@ -296,7 +296,7 @@ class ConnectionTests: XCTestCase {
         "params": {}
       }
       """
-    connection.clientToServerConnection.send(message: messageContents)
+    await connection.clientToServerConnection.send(message: messageContents)
 
     try await fulfillmentOfOrThrow(expectation)
   }
