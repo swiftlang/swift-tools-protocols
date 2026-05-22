@@ -131,7 +131,7 @@ public final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
           // No dependency
           continue
         }
-        if metadata.isDependency(of: metadata), let lastPendingTask = pendingTasks.last {
+        if pendingMetadata.isDependency(of: pendingMetadata), let lastPendingTask = pendingTasks.last {
           // This kind of task depends on all other tasks of the same kind finishing. It is sufficient to just wait on
           // the last task with this metadata, it will have all the other tasks with the same metadata as transitive
           // dependencies.
@@ -152,20 +152,20 @@ public final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
         // operation. Otherwise the assumption that the task will never throw
         // if `operation` does not throw, which we are making in `async` does
         // not hold anymore.
+        defer {
+          pendingTasks.withLock { tasksByMetadata in
+            tasksByMetadata[metadata, default: []].removeAll(where: { $0.id == id })
+            if tasksByMetadata[metadata]?.isEmpty ?? false {
+              tasksByMetadata[metadata] = nil
+            }
+          }
+        }
+
         for dependency in dependencies {
           await dependency.task.waitForCompletion()
         }
 
-        let result = try await operation()
-
-        pendingTasks.withLock { tasksByMetadata in
-          tasksByMetadata[metadata, default: []].removeAll(where: { $0.id == id })
-          if tasksByMetadata[metadata]?.isEmpty ?? false {
-            tasksByMetadata[metadata] = nil
-          }
-        }
-
-        return result
+        return try await operation()
       }
 
       tasksByMetadata[metadata, default: []].append(PendingTask(task: task, id: id))
