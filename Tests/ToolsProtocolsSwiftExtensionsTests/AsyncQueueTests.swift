@@ -37,6 +37,60 @@ struct AsyncQueueTests {
     }
   }
 
+  /// `AsyncQueue<Serial>` runs tasks in the order they were scheduled.
+  @Test func serialTasks() async throws {
+    let queue = AsyncQueue<Serial>()
+    let recorded = ThreadSafeBox<[Int]>(initialValue: [])
+    let count = 5
+
+    var lastTask: Task<Void, Never>?
+    for i in 0..<count {
+      lastTask = queue.async {
+        recorded.withLock { $0.append(i) }
+      }
+    }
+    await lastTask?.value
+    #expect(recorded.value == Array(0..<count))
+  }
+
+  /// Tasks whose metadata has no dependency relationship with each other run
+  /// concurrently — not serially.
+  @Test func concurrentTasks() async throws {
+    let queue = AsyncQueue<Meta>()
+    let count = 5
+
+    let (startedStream, startedCont) = AsyncStream<Void>.makeStream()
+    let (releaseStream, releaseCont) = AsyncStream<Void>.makeStream()
+    // A single consumer drives the release stream; each task awaits this Task's
+    // value so multiple waiters all unblock when the stream finishes.
+    let releaseTask = Task<Void, Never> { for await _ in releaseStream {} }
+
+    var tasks: [Task<Void, Never>] = []
+    for _ in 0..<count {
+      let task = queue.async(metadata: .concurrent) {
+        startedCont.yield()
+        _ = await releaseTask.value
+      }
+      tasks.append(task)
+    }
+
+    // Each task signals before awaiting release. If the queue ran them
+    // serially, only one would signal and the started-stream loop would block
+    // indefinitely. `withTimeout` turns that into a fast, labeled failure.
+    let scheduledTasks = tasks
+    try await withTimeout(.seconds(5)) {
+      var startedCount = 0
+      for await _ in startedStream {
+        startedCount += 1
+        if startedCount == count { break }
+      }
+      releaseCont.finish()
+      for task in scheduledTasks {
+        await task.value
+      }
+    }
+  }
+
   /// A task depending on a non-self-serializing bucket must wait on every
   /// task in that bucket, not just the last one.
   @Test func serialTaskWaitsForAllConcurrentDependencies() async throws {
