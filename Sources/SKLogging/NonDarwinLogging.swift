@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Synchronization
+public import Synchronization
 @_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 
 #if canImport(Darwin)
@@ -23,54 +23,45 @@ import Foundation
 // MARK: - Log settings
 
 @_spi(SourceKitLSP) @frozen public enum LogConfig {
-  /// The globally set log level
-  private static let _logLevel = ThreadSafeBox<NonDarwinLogLevel>(
-    initialValue: {
-      if let envVar = ProcessInfo.processInfo.environment["SOURCEKIT_LSP_LOG_LEVEL"],
-        let logLevel = NonDarwinLogLevel(envVar)
-      {
-        return logLevel
-      }
-      #if DEBUG
-      return .debug
-      #else
-      return .default
-      #endif
-    }()
-  )
+  private static var initialLogLevel: NonDarwinLogLevel {
+    if let envVar = ProcessInfo.processInfo.environment["SOURCEKIT_LSP_LOG_LEVEL"],
+      let logLevel = NonDarwinLogLevel(envVar)
+    {
+      return logLevel
+    }
+    #if DEBUG
+    return .debug
+    #else
+    return .default
+    #endif
+  }
 
+  private static var initialPrivacyLevel: NonDarwinLogPrivacy {
+    if let envVar = ProcessInfo.processInfo.environment["SOURCEKIT_LSP_LOG_PRIVACY_LEVEL"],
+      let privacyLevel = NonDarwinLogPrivacy(envVar)
+    {
+      return privacyLevel
+    }
+    #if DEBUG
+    return .private
+    #else
+    return .public
+    #endif
+  }
+
+  private static let _logLevel = RefBox(Atomic<NonDarwinLogLevel>(initialLogLevel))
+  private static let _privacyLevel = RefBox(Atomic<NonDarwinLogPrivacy>(initialPrivacyLevel))
+
+  /// The globally set log level
   @_spi(SourceKitLSP) public static var logLevel: NonDarwinLogLevel {
-    get {
-      _logLevel.value
-    }
-    set {
-      _logLevel.value = newValue
-    }
+    get { _logLevel.value.load(ordering: .relaxed) }
+    set { _logLevel.value.store(newValue, ordering: .relaxed) }
   }
 
   /// The globally set privacy level
-  private static let _privacyLevel = ThreadSafeBox<NonDarwinLogPrivacy>(
-    initialValue: {
-      if let envVar = ProcessInfo.processInfo.environment["SOURCEKIT_LSP_LOG_PRIVACY_LEVEL"],
-        let privacyLevel = NonDarwinLogPrivacy(envVar)
-      {
-        return privacyLevel
-      }
-      #if DEBUG
-      return .private
-      #else
-      return .public
-      #endif
-    }()
-  )
-
   @_spi(SourceKitLSP) public static var privacyLevel: NonDarwinLogPrivacy {
-    get {
-      _privacyLevel.value
-    }
-    set {
-      _privacyLevel.value = newValue
-    }
+    get { _privacyLevel.value.load(ordering: .relaxed) }
+    set { _privacyLevel.value.store(newValue, ordering: .relaxed) }
   }
 }
 
@@ -81,12 +72,17 @@ import Foundation
 ///
 /// For documentation of the different log levels see
 /// https://developer.apple.com/documentation/os/oslogtype.
-@_spi(SourceKitLSP) @frozen public enum NonDarwinLogLevel: Comparable, CustomStringConvertible, Sendable {
+@_spi(SourceKitLSP) @frozen
+public enum NonDarwinLogLevel: UInt8, Comparable, CustomStringConvertible, AtomicRepresentable, Sendable {
   case debug
   case info
   case `default`
   case error
   case fault
+
+  public static func < (lhs: NonDarwinLogLevel, rhs: NonDarwinLogLevel) -> Bool {
+    lhs.rawValue < rhs.rawValue
+  }
 
   @_spi(SourceKitLSP) public init?(_ value: String) {
     switch value.lowercased() {
@@ -138,10 +134,14 @@ import Foundation
 ///
 /// For documentation of the different privacy levels see
 /// https://developer.apple.com/documentation/os/oslogprivacy.
-@_spi(SourceKitLSP) @frozen public enum NonDarwinLogPrivacy: Comparable, Sendable {
+@_spi(SourceKitLSP) @frozen public enum NonDarwinLogPrivacy: UInt8, Comparable, Sendable, AtomicRepresentable {
   case `public`
   case `private`
   case sensitive
+
+  @_spi(SourceKitLSP) public static func < (lhs: NonDarwinLogPrivacy, rhs: NonDarwinLogPrivacy) -> Bool {
+    lhs.rawValue < rhs.rawValue
+  }
 
   @_spi(SourceKitLSP) public init?(_ value: String) {
     switch value.lowercased() {

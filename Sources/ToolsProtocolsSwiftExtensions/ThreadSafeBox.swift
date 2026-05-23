@@ -2,7 +2,7 @@
 //
 // This source file is part of the Swift.org open source project
 //
-// Copyright (c) 2014 - 2023 Apple Inc. and the Swift project authors
+// Copyright (c) 2014 - 2026 Apple Inc. and the Swift project authors
 // Licensed under Apache License v2.0 with Runtime Library Exception
 //
 // See https://swift.org/LICENSE.txt for license information
@@ -10,52 +10,44 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+public import Synchronization
 
-/// A thread safe container that contains a value of type `T`.
+/// A wrapper around a heap-allocated `RefBox<Mutex<Value>>`, providing ergonomic
+/// thread-safe access to a mutable shared state.
 ///
-/// - Note: Unchecked sendable conformance because value is guarded by a lock.
-package class ThreadSafeBox<T: Sendable>: @unchecked Sendable {
-  /// Lock guarding `_value`.
-  private let lock = NSLock()
+/// Compound mutations that need to be observed atomically (e.g. read-modify-write
+/// on the wrapped value) must use ``withLock(_:)``; `var value`'s getter and setter
+/// each take the lock independently.
+@_spi(SourceKitLSP) @frozen public struct ThreadSafeBox<Value: ~Copyable>: Sendable {
+  @usableFromInline let box: RefBox<Mutex<Value>>
 
-  private var _value: T
-
-  package var value: T {
-    get {
-      return lock.withLock {
-        return _value
-      }
-    }
-    set {
-      lock.withLock {
-        _value = newValue
-      }
-    }
-    _modify {
-      lock.lock()
-      defer { lock.unlock() }
-      yield &_value
-    }
+  @inlinable public init(initialValue: consuming sending Value) {
+    self.box = RefBox(Mutex(initialValue))
   }
 
-  package init(initialValue: T) {
-    _value = initialValue
+  @inlinable public func withLock<Result, E: Error>(
+    _ body: (inout sending Value) throws(E) -> sending Result
+  ) throws(E) -> sending Result {
+    try box.value.withLock(body)
   }
+}
 
-  package func withLock<Result>(_ body: (inout T) throws -> Result) rethrows -> Result {
-    return try lock.withLock {
-      return try body(&_value)
-    }
+extension ThreadSafeBox where Value: Sendable {
+  public var value: Value {
+    @inlinable get { withLock { $0 } }
+    @inlinable nonmutating set { withLock { $0 = newValue } }
   }
+}
 
-  /// If the value in the box is an optional, return it and reset it to `nil`
-  /// in an atomic operation.
-  package func takeValue<U>() -> T where U? == T {
-    lock.withLock {
-      guard let value = self._value else { return nil }
-      self._value = nil
-      return value
+extension ThreadSafeBox {
+  /// Atomically reads the wrapped optional value and resets it to `nil`.
+  @inlinable public func takeValue<Wrapped>() -> sending Wrapped? where Value == Wrapped? {
+    withLock { state in
+      // Don't use `Optional.take()` because the compiler can't see through `take()`
+      // to prove the returned value is disjoint from `state`.
+      let result = state
+      state = nil
+      return result
     }
   }
 }
