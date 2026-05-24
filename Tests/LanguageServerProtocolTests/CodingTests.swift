@@ -1392,6 +1392,261 @@ final class CodingTests: XCTestCase {
   func testShutdownResponse() {
     checkCoding(ShutdownRequest.Response(), json: "null")
   }
+
+  func testRegistrationOptions() {
+    // Include the actual CapabilityRegistration here to ensure LSPAny encoding can merge the options correctly
+    checkCoding(
+      CapabilityRegistration(
+        id: "registration-id",
+        method: "test/method",
+        registerOptions: CompletionRegistrationOptions(
+          documentSelector: [DocumentFilter(language: "swift")],
+          completionOptions: CompletionOptions(resolveProvider: true, triggerCharacters: [".", "("])
+        ).encodeToLSPAny()
+      ),
+      json: """
+        {
+          "id" : "registration-id",
+          "method" : "test/method",
+          "registerOptions" : {
+            "documentSelector" : [
+              {
+                "language" : "swift"
+              }
+            ],
+            "resolveProvider" : true,
+            "triggerCharacters" : [
+              ".",
+              "("
+            ]
+          }
+        }
+        """
+    )
+
+    checkCoding(
+      CapabilityRegistration(
+        id: "registration-id",
+        method: "test/method",
+        registerOptions: SignatureHelpRegistrationOptions(
+          documentSelector: [DocumentFilter(language: "swift")],
+          signatureHelpOptions: SignatureHelpOptions(triggerCharacters: ["(", "["], retriggerCharacters: [",", ":"])
+        ).encodeToLSPAny()
+      ),
+      json: """
+        {
+          "id" : "registration-id",
+          "method" : "test/method",
+          "registerOptions" : {
+            "documentSelector" : [
+              {
+                "language" : "swift"
+              }
+            ],
+            "retriggerCharacters" : [
+              ",",
+              ":"
+            ],
+            "triggerCharacters" : [
+              "(",
+              "["
+            ]
+          }
+        }
+        """
+    )
+
+    checkCoding(
+      CapabilityRegistration(
+        id: "registration-id",
+        method: "test/method",
+        registerOptions:
+          FoldingRangeRegistrationOptions(
+            documentSelector: [DocumentFilter(language: "swift")],
+            foldingRangeOptions: FoldingRangeOptions()
+          ).encodeToLSPAny()
+      ),
+      json: """
+        {
+          "id" : "registration-id",
+          "method" : "test/method",
+          "registerOptions" : {
+            "documentSelector" : [
+              {
+                "language" : "swift"
+              }
+            ]
+          }
+        }
+        """
+    )
+
+    checkCoding(
+      CapabilityRegistration(
+        id: "registration-id",
+        method: "test/method",
+        registerOptions:
+          SemanticTokensRegistrationOptions(
+            documentSelector: [DocumentFilter(language: "swift")],
+            semanticTokenOptions: SemanticTokensOptions(
+              legend: SemanticTokensLegend(
+                tokenTypes: ["class", "function"],
+                tokenModifiers: ["declaration", "static"]
+              ),
+              range: .bool(true),
+              full: .bool(true)
+            )
+          ).encodeToLSPAny()
+      ),
+      json: """
+        {
+          "id" : "registration-id",
+          "method" : "test/method",
+          "registerOptions" : {
+            "documentSelector" : [
+              {
+                "language" : "swift"
+              }
+            ],
+            "full" : true,
+            "legend" : {
+              "tokenModifiers" : [
+                "declaration",
+                "static"
+              ],
+              "tokenTypes" : [
+                "class",
+                "function"
+              ]
+            },
+            "range" : true
+          }
+        }
+        """
+    )
+
+    checkCoding(
+      CapabilityRegistration(
+        id: "registration-id",
+        method: "test/method",
+        registerOptions:
+          InlayHintRegistrationOptions(
+            documentSelector: [DocumentFilter(language: "swift")],
+            inlayHintOptions: InlayHintOptions(resolveProvider: true)
+          ).encodeToLSPAny()
+      ),
+      json: """
+        {
+          "id" : "registration-id",
+          "method" : "test/method",
+          "registerOptions" : {
+            "documentSelector" : [
+              {
+                "language" : "swift"
+              }
+            ],
+            "resolveProvider" : true
+          }
+        }
+        """
+    )
+
+    checkCoding(
+      CapabilityRegistration(
+        id: "registration-id",
+        method: "test/method",
+        registerOptions:
+          DiagnosticRegistrationOptions(
+            documentSelector: [DocumentFilter(language: "swift")],
+            diagnosticOptions: DiagnosticOptions(interFileDependencies: true, workspaceDiagnostics: false)
+          ).encodeToLSPAny()
+      ),
+      json: """
+        {
+          "id" : "registration-id",
+          "method" : "test/method",
+          "registerOptions" : {
+            "documentSelector" : [
+              {
+                "language" : "swift"
+              }
+            ],
+            "interFileDependencies" : true,
+            "workspaceDiagnostics" : false
+          }
+        }
+        """
+    )
+
+    checkCoding(
+      CapabilityRegistration(
+        id: "registration-id",
+        method: "test/method",
+        registerOptions:
+          CodeLensRegistrationOptions(
+            documentSelector: [DocumentFilter(language: "swift")],
+            codeLensOptions: CodeLensOptions(resolveProvider: true)
+          ).encodeToLSPAny()
+      ),
+      json: """
+        {
+          "id" : "registration-id",
+          "method" : "test/method",
+          "registerOptions" : {
+            "documentSelector" : [
+              {
+                "language" : "swift"
+              }
+            ],
+            "resolveProvider" : true
+          }
+        }
+        """
+    )
+
+    checkCoding(
+      CapabilityRegistration(
+        id: "registration-id",
+        method: "test/method",
+        registerOptions:
+          DidChangeWatchedFilesRegistrationOptions(watchers: [FileSystemWatcher(globPattern: "**/*.swift")])
+          .encodeToLSPAny()
+      ),
+      json: """
+        {
+          "id" : "registration-id",
+          "method" : "test/method",
+          "registerOptions" : {
+            "watchers" : [
+              {
+                "globPattern" : "**/*.swift"
+              }
+            ]
+          }
+        }
+        """
+    )
+
+    checkCoding(
+      CapabilityRegistration(
+        id: "registration-id",
+        method: "test/method",
+        registerOptions:
+          ExecuteCommandRegistrationOptions(commands: ["sourcekit-lsp.test"]).encodeToLSPAny()
+      ),
+      json: """
+        {
+          "id" : "registration-id",
+          "method" : "test/method",
+          "registerOptions" : {
+            "commands" : [
+              "sourcekit-lsp.test"
+            ]
+          }
+        }
+        """
+    )
+  }
 }
 
 func with<T>(_ value: T, mutate: (inout T) -> Void) -> T {

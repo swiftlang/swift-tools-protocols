@@ -80,7 +80,14 @@ private final class LSPAnyEncoder: Encoder {
     // MARK: - .keyed
 
     func prepareKeyed() {
-      storage = .keyed([:])
+      switch storage {
+      case nil:
+        storage = .keyed([:])
+      case .keyed?:
+        break
+      case .single?, .unkeyed?:
+        preconditionFailure("cannot create keyed container after encoding a non-keyed value")
+      }
     }
     func set(key: String, value: LSPAnyReference) {
       guard case .keyed(var dictionary)? = storage else {
@@ -94,7 +101,14 @@ private final class LSPAnyEncoder: Encoder {
     // MARK: - .unkeyed
 
     func prepareUnkeyed() {
-      storage = .unkeyed([])
+      switch storage {
+      case nil:
+        storage = .unkeyed([])
+      case .unkeyed?:
+        break
+      case .single?, .keyed?:
+        preconditionFailure("cannot create unkeyed container after encoding a non-unkeyed value")
+      }
     }
     func append(value: LSPAnyReference) {
       guard case .unkeyed(var array)? = storage else {
