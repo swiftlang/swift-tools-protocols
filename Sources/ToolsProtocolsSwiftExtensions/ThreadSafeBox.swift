@@ -15,9 +15,9 @@ public import Synchronization
 /// A wrapper around a heap-allocated `RefBox<Mutex<Value>>`, providing ergonomic
 /// thread-safe access to a mutable shared state.
 ///
-/// Compound mutations that need to be observed atomically (e.g. read-modify-write
-/// on the wrapped value) must use ``withLock(_:)``; `var value`'s getter and setter
-/// each take the lock independently.
+/// `var value` is read-only. Writes must go through ``withLock(_:)`` so that
+/// read-modify-write patterns (e.g. `+=`, `append`) hold the lock for the
+/// entire operation rather than acquiring it twice.
 @_spi(SourceKitLSP) @frozen public struct ThreadSafeBox<Value: ~Copyable>: Sendable {
   @usableFromInline let box: RefBox<Mutex<Value>>
 
@@ -25,7 +25,7 @@ public import Synchronization
     self.box = RefBox(Mutex(initialValue))
   }
 
-  @inlinable public func withLock<Result, E: Error>(
+  @inlinable public func withLock<Result: ~Copyable, E: Error>(
     _ body: (inout sending Value) throws(E) -> sending Result
   ) throws(E) -> sending Result {
     try box.value.withLock(body)
@@ -33,9 +33,9 @@ public import Synchronization
 }
 
 extension ThreadSafeBox where Value: Sendable {
-  public var value: Value {
-    @inlinable get { withLock { $0 } }
-    @inlinable nonmutating set { withLock { $0 = newValue } }
+  /// Atomically reads the wrapped value. Writes must go through ``withLock(_:)``.
+  @inlinable public var value: Value {
+    withLock { $0 }
   }
 }
 

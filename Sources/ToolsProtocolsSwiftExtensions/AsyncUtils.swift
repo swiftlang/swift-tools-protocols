@@ -121,7 +121,8 @@ extension Task where Failure == Never {
     operation: {
       try Task.checkCancellation()
       return try await withCheckedThrowingContinuation { continuation in
-        handleWrapper.value = operation(continuation)
+        let handle = operation(continuation)
+        handleWrapper.withLock { $0 = handle }
 
         // Check if the task was cancelled. This ensures we send a
         // CancelNotification even if the task gets cancelled after we register
@@ -285,7 +286,7 @@ package func withTimeout<T: Sendable>(
   let stream = AsyncThrowingStream<T?, Error> { continuation in
     Task {
       try await Task.sleep(for: timeout)
-      didHitTimeout.value = true
+      didHitTimeout.withLock { $0 = true }
       continuation.yield(nil)
     }
 
