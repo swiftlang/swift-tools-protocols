@@ -35,7 +35,7 @@ jobs:
       linux_build_command: 'swift package -Xbuild-tools-swiftc -DUSE_PROCESS_SPAWNING_WORKAROUND cmake-smoke-test --disable-sandbox --cmake-path `which cmake` --ninja-path `which ninja` --extra-cmake-arg -DCMAKE_C_COMPILER=`which clang` --extra-cmake-arg -DCMAKE_CXX_COMPILER=`which clang++` --extra-cmake-arg -DCMAKE_Swift_COMPILER=`which swiftc`'
       linux_swift_versions: '["nightly-main"]'
       enable_macos_checks: true
-      macos_xcode_versions: '["26.0"]'
+      macos_xcode_versions: '["26.4"]'
       macos_pre_build_command: INSTALL_CMAKE=1 ./.github/scripts/prebuild.sh
       macos_build_command: 'export PATH=$PATH:$RUNNER_TOOL_CACHE && swift package cmake-smoke-test --disable-sandbox --cmake-path `which cmake` --ninja-path `which ninja` --extra-cmake-arg -DCMAKE_C_COMPILER=`which clang` --extra-cmake-arg -DCMAKE_CXX_COMPILER=`which clang++` --extra-cmake-arg -DCMAKE_Swift_COMPILER=`which swiftc`'
       windows_pre_build_command: 'Invoke-Program .\.github\scripts\prebuild.ps1 -InstallCMake'
