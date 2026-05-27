@@ -2,7 +2,6 @@ add_compile_options("$<$<COMPILE_LANGUAGE:Swift>:SHELL:-package-name swift_langu
 add_compile_options("$<$<COMPILE_LANGUAGE:Swift>:SHELL:-DRESILIENT_LIBRARIES>")
 add_compile_options("$<$<COMPILE_LANGUAGE:Swift>:SHELL:-swift-version 6>")
 add_subdirectory(BuildServerProtocol)
-add_subdirectory(ToolsProtocolsCAtomics)
 add_subdirectory(LanguageServerProtocol)
 add_subdirectory(LanguageServerProtocolTransport)
 add_subdirectory(SKLogging)

@@ -1,7 +1,6 @@
 set(sources
   AsyncQueue.swift
   AsyncUtils.swift
-  Atomics.swift
   Collection+Only.swift
   Duration+Seconds.swift
   FileManagerExtensions.swift
@@ -15,16 +14,12 @@ set(sources
 add_library(ToolsProtocolsSwiftExtensions ${sources})
 set_target_properties(ToolsProtocolsSwiftExtensions PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_Swift_MODULE_DIRECTORY})
-target_link_libraries(ToolsProtocolsSwiftExtensions PUBLIC
-  ToolsProtocolsCAtomics)
 target_link_libraries(ToolsProtocolsSwiftExtensions PRIVATE
   $<$<NOT:$<PLATFORM_ID:Darwin>>:Foundation>)
 
 add_library(_ToolsProtocolsSwiftExtensionsForPlugin ${sources})
 set_target_properties(_ToolsProtocolsSwiftExtensionsForPlugin PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_Swift_MODULE_DIRECTORY})
-target_link_libraries(_ToolsProtocolsSwiftExtensionsForPlugin PUBLIC
-  ToolsProtocolsCAtomics)
 target_link_libraries(_ToolsProtocolsSwiftExtensionsForPlugin PRIVATE
   $<$<NOT:$<PLATFORM_ID:Darwin>>:Foundation>)
 

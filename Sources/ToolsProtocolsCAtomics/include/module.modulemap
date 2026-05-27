@@ -1,4 +1,0 @@
-module ToolsProtocolsCAtomics {
-  header "ToolsProtocolsCAtomics.h"
-  export *
-}

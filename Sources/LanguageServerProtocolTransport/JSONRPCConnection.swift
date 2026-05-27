@@ -13,6 +13,7 @@
 public import Foundation
 public import LanguageServerProtocol
 @_spi(SourceKitLSP) import SKLogging
+import Synchronization
 @_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 
 #if canImport(Android)
@@ -85,7 +86,7 @@ public final class JSONRPCConnection: Connection {
   private nonisolated(unsafe) var state: State = .created
 
   /// An integer that hasn't been used for a request ID yet.
-  let nextRequestIDStorage = AtomicUInt32(initialValue: 0)
+  let nextRequestIDStorage = Atomic<UInt32>(0)
 
   struct OutstandingRequest: Sendable {
     var responseType: ResponseType.Type
@@ -597,7 +598,7 @@ public final class JSONRPCConnection: Connection {
 
   /// Request id for the next outgoing request.
   public func nextRequestID() -> RequestID {
-    return .string("sk-\(nextRequestIDStorage.fetchAndIncrement())")
+    return .string("sk-\(nextRequestIDStorage.wrappingAdd(1, ordering: .relaxed).oldValue)")
   }
 
   // MARK: Connection interface

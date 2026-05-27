@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 public import LanguageServerProtocol
+import Synchronization
 @_spi(SourceKitLSP) import ToolsProtocolsSwiftExtensions
 
 /// A request and a callback that returns the request's reply
@@ -22,7 +23,7 @@ public final class RequestAndReply<Params: RequestType>: Sendable {
   private let reply: @Sendable (Result<Params.Response, any Error>) -> Void
 
   /// Whether a reply has been made. Every request must reply exactly once.
-  private let replied: AtomicBool = AtomicBool(initialValue: false)
+  private let replied = Atomic<Bool>(false)
 
   public init(_ request: Params, reply: @escaping @Sendable (Result<Params.Response, any Error>) -> Void) {
     self.params = request
@@ -30,12 +31,12 @@ public final class RequestAndReply<Params: RequestType>: Sendable {
   }
 
   deinit {
-    precondition(replied.value, "request never received a reply")
+    precondition(replied.load(ordering: .acquiring), "request never received a reply")
   }
 
   /// Call the `replyBlock` with the result produced by the given closure.
   public func reply(_ body: () async throws -> Params.Response) async {
-    let didReply = replied.setAndGet(newValue: true)
+    let didReply = replied.exchange(true, ordering: .acquiringAndReleasing)
     precondition(!didReply, "replied to request more than once")
     do {
       reply(.success(try await body()))

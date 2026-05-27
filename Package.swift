@@ -52,13 +52,6 @@ var targets: [Target] = [
     swiftSettings: globalSwiftSettings
   ),
 
-  // MARK: ToolsProtocolsCAtomics
-
-  .target(
-    name: "ToolsProtocolsCAtomics",
-    dependencies: []
-  ),
-
   // MARK: LanguageServerProtocol
 
   .target(
@@ -153,7 +146,7 @@ var targets: [Target] = [
 
   .target(
     name: "ToolsProtocolsSwiftExtensions",
-    dependencies: ["ToolsProtocolsCAtomics"],
+    dependencies: [],
     exclude: ["CMakeLists.txt"],
     swiftSettings: globalSwiftSettings
   ),
@@ -161,7 +154,7 @@ var targets: [Target] = [
   // SourceKit-LSP SPI target. Builds ToolsProtocolsSwiftExtensions with an alternate module name to avoid runtime type collisions.
   .target(
     name: "_ToolsProtocolsSwiftExtensionsForPlugin",
-    dependencies: ["ToolsProtocolsCAtomics"],
+    dependencies: [],
     exclude: ["CMakeLists.txt"],
     swiftSettings: globalSwiftSettings
   ),
