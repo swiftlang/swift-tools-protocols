@@ -34,7 +34,7 @@ public protocol TextDocumentRegistrationOptionsProtocol {
   var textDocumentRegistrationOptions: TextDocumentRegistrationOptions { get }
 }
 
-/// Code completiion registration options.
+/// Code completion registration options.
 public struct CompletionRegistrationOptions: RegistrationOptions, TextDocumentRegistrationOptionsProtocol, Hashable {
   public var textDocumentRegistrationOptions: TextDocumentRegistrationOptions
   public var completionOptions: CompletionOptions
@@ -43,6 +43,16 @@ public struct CompletionRegistrationOptions: RegistrationOptions, TextDocumentRe
     self.textDocumentRegistrationOptions =
       TextDocumentRegistrationOptions(documentSelector: documentSelector)
     self.completionOptions = completionOptions
+  }
+
+  public init(from decoder: Decoder) throws {
+    self.textDocumentRegistrationOptions = try TextDocumentRegistrationOptions(from: decoder)
+    self.completionOptions = try CompletionOptions(from: decoder)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    try textDocumentRegistrationOptions.encode(to: encoder)
+    try completionOptions.encode(to: encoder)
   }
 }
 
@@ -56,6 +66,16 @@ public struct SignatureHelpRegistrationOptions: RegistrationOptions, TextDocumen
       TextDocumentRegistrationOptions(documentSelector: documentSelector)
     self.signatureHelpOptions = signatureHelpOptions
   }
+
+  public init(from decoder: Decoder) throws {
+    self.textDocumentRegistrationOptions = try TextDocumentRegistrationOptions(from: decoder)
+    self.signatureHelpOptions = try SignatureHelpOptions(from: decoder)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    try textDocumentRegistrationOptions.encode(to: encoder)
+    try signatureHelpOptions.encode(to: encoder)
+  }
 }
 
 /// Folding range registration options.
@@ -67,6 +87,16 @@ public struct FoldingRangeRegistrationOptions: RegistrationOptions, TextDocument
     self.textDocumentRegistrationOptions =
       TextDocumentRegistrationOptions(documentSelector: documentSelector)
     self.foldingRangeOptions = foldingRangeOptions
+  }
+
+  public init(from decoder: Decoder) throws {
+    self.textDocumentRegistrationOptions = try TextDocumentRegistrationOptions(from: decoder)
+    self.foldingRangeOptions = try FoldingRangeOptions(from: decoder)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    try textDocumentRegistrationOptions.encode(to: encoder)
+    try foldingRangeOptions.encode(to: encoder)
   }
 }
 
@@ -84,6 +114,16 @@ public struct SemanticTokensRegistrationOptions: RegistrationOptions, TextDocume
       TextDocumentRegistrationOptions(documentSelector: documentSelector)
     self.semanticTokenOptions = semanticTokenOptions
   }
+
+  public init(from decoder: Decoder) throws {
+    self.textDocumentRegistrationOptions = try TextDocumentRegistrationOptions(from: decoder)
+    self.semanticTokenOptions = try SemanticTokensOptions(from: decoder)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    try textDocumentRegistrationOptions.encode(to: encoder)
+    try semanticTokenOptions.encode(to: encoder)
+  }
 }
 
 public struct InlayHintRegistrationOptions: RegistrationOptions, TextDocumentRegistrationOptionsProtocol, Hashable {
@@ -96,6 +136,16 @@ public struct InlayHintRegistrationOptions: RegistrationOptions, TextDocumentReg
   ) {
     textDocumentRegistrationOptions = TextDocumentRegistrationOptions(documentSelector: documentSelector)
     self.inlayHintOptions = inlayHintOptions
+  }
+
+  public init(from decoder: Decoder) throws {
+    self.textDocumentRegistrationOptions = try TextDocumentRegistrationOptions(from: decoder)
+    self.inlayHintOptions = try InlayHintOptions(from: decoder)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    try textDocumentRegistrationOptions.encode(to: encoder)
+    try inlayHintOptions.encode(to: encoder)
   }
 }
 
@@ -111,6 +161,16 @@ public struct DiagnosticRegistrationOptions: RegistrationOptions, TextDocumentRe
     textDocumentRegistrationOptions = TextDocumentRegistrationOptions(documentSelector: documentSelector)
     self.diagnosticOptions = diagnosticOptions
   }
+
+  public init(from decoder: Decoder) throws {
+    self.textDocumentRegistrationOptions = try TextDocumentRegistrationOptions(from: decoder)
+    self.diagnosticOptions = try DiagnosticOptions(from: decoder)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    try textDocumentRegistrationOptions.encode(to: encoder)
+    try diagnosticOptions.encode(to: encoder)
+  }
 }
 
 /// Describe options to be used when registering for code lenses.
@@ -124,6 +184,16 @@ public struct CodeLensRegistrationOptions: RegistrationOptions, TextDocumentRegi
   ) {
     textDocumentRegistrationOptions = TextDocumentRegistrationOptions(documentSelector: documentSelector)
     self.codeLensOptions = codeLensOptions
+  }
+
+  public init(from decoder: Decoder) throws {
+    self.textDocumentRegistrationOptions = try TextDocumentRegistrationOptions(from: decoder)
+    self.codeLensOptions = try CodeLensOptions(from: decoder)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    try textDocumentRegistrationOptions.encode(to: encoder)
+    try codeLensOptions.encode(to: encoder)
   }
 }
 
