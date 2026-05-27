@@ -137,7 +137,7 @@ public final class AsyncQueue<TaskMetadata: DependencyTracker>: Sendable {
           }
         }
 
-        for dependency in dependencies {
+        await dependencies.concurrentForEach { dependency in
           await dependency.task.waitForCompletion()
         }
 
