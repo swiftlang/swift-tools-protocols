@@ -16,7 +16,8 @@ set_target_properties(LanguageServerProtocolTransport PROPERTIES
 target_link_libraries(LanguageServerProtocolTransport PRIVATE
   LanguageServerProtocol
   BuildServerProtocol
-  SKLogging)
+  SKLogging
+  ToolsProtocolsSwiftExtensions)
 target_link_libraries(LanguageServerProtocolTransport PRIVATE
   $<$<NOT:$<PLATFORM_ID:Darwin>>:swiftDispatch>
   $<$<NOT:$<PLATFORM_ID:Darwin>>:Foundation>)

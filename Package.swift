@@ -88,6 +88,7 @@ var targets: [Target] = [
   .testTarget(
     name: "LanguageServerProtocolTransportTests",
     dependencies: [
+      "LanguageServerProtocol",
       "LanguageServerProtocolTransport",
       "SKLogging",
       "ToolsProtocolsTestSupport",
