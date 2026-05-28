@@ -4,8 +4,8 @@ set(sources
   Collection+Only.swift
   Duration+Seconds.swift
   FileManagerExtensions.swift
-  NSLock+WithLock.swift
   PipeAsStringHandler.swift
+  RefBox.swift
   Task+WithPriorityChangedHandler.swift
   ThreadSafeBox.swift
   URLExtensions.swift

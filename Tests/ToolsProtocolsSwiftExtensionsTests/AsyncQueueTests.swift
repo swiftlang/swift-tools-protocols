@@ -120,7 +120,7 @@ struct AsyncQueueTests {
 
     let serialRan = ThreadSafeBox<Bool>(initialValue: false)
     let serialTask = queue.async(metadata: .serial) {
-      serialRan.value = true
+      serialRan.withLock { $0 = true }
     }
 
     // Release only the last concurrent task. The serial task must still wait
