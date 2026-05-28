@@ -175,7 +175,7 @@ extension Collection where Self: Sendable, Element: Sendable {
   // Workaround formatter issue: https://github.com/swiftlang/swift-format/issues/1081
   // swift-format-ignore
   @_spi(SourceKitLSP) public func concurrentForEach(_ body: nonisolated(nonsending) @escaping @Sendable (Element) async -> Void) async {
-    await withTaskGroup(of: Void.self) { taskGroup in
+    await withDiscardingTaskGroup { taskGroup in
       for element in self {
         taskGroup.addTask {
           await body(element)
