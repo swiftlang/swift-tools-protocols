@@ -10,22 +10,29 @@
 //
 //===----------------------------------------------------------------------===//
 
-package import Foundation
+public import Foundation
 
 #if os(Windows)
 import WinSDK
 #endif
 
-enum FilePathError: Error, CustomStringConvertible {
+@_spi(SourceKitLSP) @frozen
+public enum FilePathError: Error, CustomStringConvertible {
   case noFileSystemRepresentation(URL)
   case noFileURL(URL)
+  case circularSymlink(URL)
+  case fileAttributesDontHaveModificationDate(URL)
 
-  var description: String {
+  public var description: String {
     switch self {
     case .noFileSystemRepresentation(let url):
       return "\(url.description) cannot be represented as a file system path"
     case .noFileURL(let url):
       return "\(url.description) is not a file URL"
+    case .circularSymlink(let url):
+      return "Circular symlink at \(url)"
+    case .fileAttributesDontHaveModificationDate(let url):
+      return "File attributes don't contain a modification date: \(url)"
     }
   }
 }
@@ -37,7 +44,8 @@ extension URL {
   ///   path by stripping away `private` prefixes. Since sourcekitd is not performing this standardization, using
   ///   `resolvingSymlinksInPath` can lead to slightly mismatched URLs between the sourcekit-lsp response and the test
   ///   assertion.
-  package var realpath: URL {
+  @_spi(SourceKitLSP)
+  public var realpath: URL {
     get throws {
       #if canImport(Darwin)
       return try self.filePath.withCString { path in
@@ -63,7 +71,8 @@ extension URL {
   /// - It throws an error when called on a non-file URL.
   ///
   /// `filePath` should generally be preferred over `path` when dealing with file URLs.
-  package var filePath: String {
+  @_spi(SourceKitLSP)
+  public var filePath: String {
     get throws {
       guard self.isFileURL else {
         throw FilePathError.noFileURL(self)
@@ -89,7 +98,8 @@ extension URL {
 
   /// Assuming this URL is a file URL, checks if it looks like a root path. This is a string check, ie. the return
   /// value for a path of `"/foo/.."` would be `false`. An error will be thrown is this is a non-file URL.
-  package var isRoot: Bool {
+  @_spi(SourceKitLSP)
+  public var isRoot: Bool {
     get throws {
       let checkPath = try filePath
       #if os(Windows)
@@ -101,7 +111,42 @@ extension URL {
   }
 
   /// Returns true if the path of `self` starts with the path in `other`.
-  package func isDescendant(of other: URL) -> Bool {
+  @_spi(SourceKitLSP) @inlinable
+  public func isDescendant(of other: URL) -> Bool {
     return self.pathComponents.dropLast().starts(with: other.pathComponents)
+  }
+
+  /// Assuming this URL is a file URL, returns the modification date of the file.
+  ///
+  /// For symbolic links, returns the most recent modification date in the symlink chain, which updates when
+  /// either the symlink or the target file is modified.
+  @_spi(SourceKitLSP)
+  public var fileModificationDate: Date {
+    get throws {
+      var mtime = Date.distantPast
+      let fileManager = FileManager.default
+      var visitedURLs: Set<URL> = []
+      var url = self
+      while true {
+        let path = try url.filePath
+        let fileAttrs = try fileManager.attributesOfItem(atPath: path)
+
+        guard let fileModTime = fileAttrs[FileAttributeKey.modificationDate] as? Date else {
+          throw FilePathError.fileAttributesDontHaveModificationDate(url)
+        }
+        mtime = max(mtime, fileModTime)
+
+        // Follow the symlink and find the most recent mtime.
+        if let symLinkPath = try? fileManager.destinationOfSymbolicLink(atPath: path) {
+          url = URL(filePath: symLinkPath, relativeTo: url)
+          guard visitedURLs.insert(url).inserted else {
+            throw FilePathError.circularSymlink(url)
+          }
+        } else {
+          break
+        }
+      }
+      return mtime
+    }
   }
 }

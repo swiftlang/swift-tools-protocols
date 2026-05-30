@@ -11,7 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 extension Duration {
-  package var seconds: Double {
+  @_spi(SourceKitLSP) @inlinable
+  public var seconds: Double {
     return Double(self.components.attoseconds) / 1_000_000_000_000_000_000 + Double(self.components.seconds)
   }
 }

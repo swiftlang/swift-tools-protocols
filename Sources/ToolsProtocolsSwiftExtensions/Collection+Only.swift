@@ -10,9 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-package extension Collection {
+extension Collection {
   /// If the collection contains a single element, return it, otherwise `nil`.
-  var only: Element? {
+  @_spi(SourceKitLSP) @inlinable
+  public var only: Element? {
     if !isEmpty && index(after: startIndex) == endIndex {
       return self.first!
     } else {
