@@ -87,7 +87,7 @@ final class AsyncUtilsTests: XCTestCase {
             return callbackCalled.value
           }
         },
-        taskPriorityChanged: {
+        taskPriorityChanged: { _ in
           callbackCalled.withLock { $0 = true }
         }
       )
@@ -108,7 +108,7 @@ final class AsyncUtilsTests: XCTestCase {
         let value: String? = nil
         return value
       },
-      taskPriorityChanged: {}
+      taskPriorityChanged: { _ in }
     )
     XCTAssertNil(result)
   }
@@ -126,7 +126,7 @@ final class AsyncUtilsTests: XCTestCase {
             return callbackCalled.value
           }
         },
-        taskPriorityChanged: {
+        taskPriorityChanged: { _ in
           callbackCalled.withLock { $0 = true }
         }
       )
@@ -145,7 +145,7 @@ final class AsyncUtilsTests: XCTestCase {
         initialPriority: Task.currentPriority,
         pollingInterval: .milliseconds(100),
         operation: { throw TestError() },
-        taskPriorityChanged: {}
+        taskPriorityChanged: { _ in }
       )
     ) { error in
       XCTAssert(error is TestError, "Received unexpected error \(error)")

@@ -12,7 +12,8 @@
 
 import Synchronization
 
-/// Runs `operation`. If the task's priority changes while the operation is running, calls `taskPriorityChanged`.
+/// Runs `operation`. If the task's priority changes while the operation is running, calls `taskPriorityChanged`
+/// with the new priority.
 ///
 /// Unlike `withTaskPriorityEscalationHandler`, this also calls `taskPriorityChanged` once at entry if the
 /// current task is already escalated from `initialPriority` — escalations that happened before the handler
@@ -25,19 +26,20 @@ public func withTaskPriorityChangedHandler<T: Sendable>(
   initialPriority: TaskPriority = Task.currentPriority,
   pollingInterval: Duration = .seconds(0.1),
   @_inheritActorContext operation: nonisolated(nonsending) @escaping @Sendable () async throws -> T,
-  taskPriorityChanged: @escaping @Sendable () -> Void
+  taskPriorityChanged: @escaping @Sendable (_ newPriority: TaskPriority) -> Void
 ) async rethrows -> T {
   if #available(macOS 26, iOS 26, macCatalyst 26, *) {
     return try await withTaskPriorityEscalationHandler(
       operation: {
         // If the task is already escalated from `initialPriority`, notify the caller;
         // otherwise it wouldn't know about it because the handler hasn't been registered until now.
-        if Task.currentPriority > initialPriority {
-          Task { taskPriorityChanged() }
+        let currentPriority = Task.currentPriority
+        if currentPriority > initialPriority {
+          Task { taskPriorityChanged(currentPriority) }
         }
         return try await operation()
       },
-      onPriorityEscalated: { _, _ in taskPriorityChanged() }
+      onPriorityEscalated: { _, newPriority in taskPriorityChanged(newPriority) }
     )
   } else {
     return try await withTaskPriorityChangedHandlerLegacy(
@@ -58,7 +60,7 @@ public func withTaskPriorityChangedHandlerLegacy<T: Sendable>(
   initialPriority: TaskPriority,
   pollingInterval: Duration,
   @_inheritActorContext operation: nonisolated(nonsending) @escaping @Sendable () async throws -> T,
-  taskPriorityChanged: @escaping @Sendable () -> Void
+  taskPriorityChanged: @escaping @Sendable (_ newPriority: TaskPriority) -> Void
 ) async rethrows -> T {
   let lastPriority = RefBox(Atomic<TaskPriority.RawValue>(initialPriority.rawValue))
   return try await withThrowingTaskGroup(of: Optional<T>.self) { taskGroup in
@@ -74,7 +76,7 @@ public func withTaskPriorityChangedHandlerLegacy<T: Sendable>(
         }
         let newPriority = Task.currentPriority.rawValue
         if newPriority != lastPriority.value.exchange(newPriority, ordering: .relaxed) {
-          taskPriorityChanged()
+          taskPriorityChanged(TaskPriority(rawValue: newPriority))
         }
         do {
           try await Task.sleep(for: pollingInterval)

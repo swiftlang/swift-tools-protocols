@@ -249,13 +249,17 @@ public func withTimeoutResult<T: Sendable>(
     }
     // The for-await exits without a value only if the consuming task is cancelled.
     return .result(.failure(CancellationError()))
-  } taskPriorityChanged: {
-    // Spawning fresh tasks that await `bodyTask` and `timeoutTask` forces the runtime to
-    // escalate their priorities via the await chain so `body`'s `Task.currentPriority`
-    // reflects the elevated value.
-    let newPriority = Task.currentPriority
-    Task(priority: newPriority) { _ = await bodyTask.result }
-    Task(priority: newPriority) { _ = await timeoutTask.value }
+  } taskPriorityChanged: { newPriority in
+    if #available(macOS 26, iOS 26, macCatalyst 26, *) {
+      bodyTask.escalatePriority(to: newPriority)
+      timeoutTask.escalatePriority(to: newPriority)
+    } else {
+      // Spawning fresh tasks that await `bodyTask` and `timeoutTask` forces the runtime to
+      // escalate their priorities via the await chain so `body`'s `Task.currentPriority`
+      // reflects the elevated value.
+      Task(priority: newPriority) { _ = await bodyTask.result }
+      Task(priority: newPriority) { _ = await timeoutTask.value }
+    }
   }
 
   // Stop the still-pending timer; no-op if it already elapsed.
