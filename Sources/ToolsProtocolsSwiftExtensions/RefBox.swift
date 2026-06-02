@@ -16,7 +16,7 @@
 @_spi(SourceKitLSP) public final class RefBox<Value: ~Copyable> {
   public let value: Value
 
-  @inlinable public init(_ value: consuming Value) {
+  public init(_ value: consuming Value) {
     self.value = value
   }
 }
