@@ -204,127 +204,127 @@ extension Collection where Self: Sendable, Element: Sendable {
   }
 }
 
+@_spi(SourceKitLSP) @frozen
+public enum WithTimeoutResult<T: Sendable>: Sendable {
+  case result(T)
+  case timedOut
+}
+
+/// Executes `body` with a `duration` timeout.
+///
+/// Returns `.result(value)` if `body` finishes within `duration`, otherwise `.timedOut`.
+///
+/// On timeout: if `resultReceivedAfterTimeout` is provided, `body` keeps running and its
+/// eventual result is passed to that callback. Otherwise, `body` is cancelled.
+@_spi(SourceKitLSP)
+public func withTimeoutResult<T: Sendable>(
+  _ timeout: Duration,
+  body: @escaping @Sendable () async throws -> T,
+  resultReceivedAfterTimeout: (@Sendable (_ result: T) async -> Void)? = nil
+) async throws -> WithTimeoutResult<T> {
+  // Capture the priority here so it stays consistent across `bodyTask`, timeoutTask`,
+  // and `withTaskPriorityChangedHandler`'s initial state.
+  let priority = Task.currentPriority
+
+  let (stream, continuation) = AsyncStream<WithTimeoutResult<Result<T, any Error>>>.makeStream()
+  let bodyTask = Task(priority: priority) {
+    do {
+      let value = try await body()
+      continuation.yield(.result(.success(value)))
+      return value
+    } catch {
+      continuation.yield(.result(.failure(error)))
+      throw error
+    }
+  }
+  let timeoutTask = Task(priority: priority) {
+    do { try await Task.sleep(for: timeout) } catch { return }
+    continuation.yield(.timedOut)
+  }
+
+  let outcome = await withTaskPriorityChangedHandler(initialPriority: priority) {
+    () -> WithTimeoutResult<Result<T, any Error>> in
+    for await value in stream {
+      return value
+    }
+    // The for-await exits without a value only if the consuming task is cancelled.
+    return .result(.failure(CancellationError()))
+  } taskPriorityChanged: { newPriority in
+    if #available(macOS 26, iOS 26, macCatalyst 26, *) {
+      bodyTask.escalatePriority(to: newPriority)
+      timeoutTask.escalatePriority(to: newPriority)
+    } else {
+      // Spawning fresh tasks that await `bodyTask` and `timeoutTask` forces the runtime to
+      // escalate their priorities via the await chain so `body`'s `Task.currentPriority`
+      // reflects the elevated value.
+      Task(priority: newPriority) { _ = await bodyTask.result }
+      Task(priority: newPriority) { _ = await timeoutTask.value }
+    }
+  }
+
+  // Stop the still-pending timer; no-op if it already elapsed.
+  timeoutTask.cancel()
+
+  switch outcome {
+  case .result(let r):
+    // Cancel `bodyTask` if it's still running (cancellation-fallback case); no-op otherwise.
+    bodyTask.cancel()
+    return try .result(r.get())
+  case .timedOut:
+    if let resultReceivedAfterTimeout {
+      // Late-result dispatch: await body and deliver via callback.
+      Task { try? await resultReceivedAfterTimeout(bodyTask.value) }
+    } else {
+      bodyTask.cancel()
+    }
+    return .timedOut
+  }
+}
+
 /// Executes `body`. If it doesn't finish after `duration`, throws a `TimeoutError` and cancels `body`.
 ///
-/// `TimeoutError` is thrown immediately an the function does not wait for `body` to honor the cancellation.
+/// `TimeoutError` is thrown immediately; the function does not wait for `body` to honor the cancellation.
 ///
 /// If a `handle` is passed in and this `withTimeout` call times out, the thrown `TimeoutError` contains this handle.
 /// This way a caller can identify whether this call to `withTimeout` timed out or if a nested call timed out.
-package func withTimeout<T: Sendable>(
+@_spi(SourceKitLSP) @inlinable
+public func withTimeout<T: Sendable>(
   _ duration: Duration,
   handle: TimeoutHandle? = nil,
   _ body: @escaping @Sendable () async throws -> T
 ) async throws -> T {
-  // Get the priority with which to launch the body task here so that we can pass the same priority as the initial
-  // priority to `withTaskPriorityChangedHandler`. Otherwise, we can get into a race condition where bodyTask gets
-  // launched with a low priority, then the priority gets elevated before we call with `withTaskPriorityChangedHandler`,
-  // we thus don't receive a `taskPriorityChanged` and hence never increase the priority of `bodyTask`.
-  let priority = Task.currentPriority
-  var mutableTasks: [Task<Void, Error>] = []
-  let stream = AsyncThrowingStream<T, Error> { continuation in
-    let bodyTask = Task<Void, Error>(priority: priority) {
-      do {
-        let result = try await body()
-        continuation.yield(result)
-      } catch {
-        continuation.yield(with: .failure(error))
-      }
-    }
-
-    let timeoutTask = Task(priority: priority) {
-      try await Task.sleep(for: duration)
-      continuation.yield(with: .failure(TimeoutError(handle: handle)))
-      bodyTask.cancel()
-    }
-    mutableTasks = [bodyTask, timeoutTask]
-  }
-
-  let tasks = mutableTasks
-
-  defer {
-    // Be extra careful and ensure that we don't leave `bodyTask` or `timeoutTask` running when `withTimeout` finishes,
-    // eg. if `withTaskPriorityChangedHandler` adds some behavior that never executes `body` if the task gets cancelled.
-    for task in tasks {
-      task.cancel()
-    }
-  }
-
-  return try await withTaskPriorityChangedHandler(initialPriority: priority) {
-    for try await value in stream {
-      return value
-    }
-    // The only reason for the loop above to terminate is if the Task got cancelled or if the stream finishes
-    // (which it never does).
-    if Task.isCancelled {
-      // Throwing a `CancellationError` will make us return from `withTimeout`. We will cancel the `bodyTask` from the
-      // `defer` method above.
-      throw CancellationError()
-    } else {
-      preconditionFailure("Continuation never finishes")
-    }
-  } taskPriorityChanged: {
-    for task in tasks {
-      Task(priority: Task.currentPriority) {
-        _ = try? await task.value
-      }
-    }
+  switch try await withTimeoutResult(duration, body: body) {
+  case .result(let value): return value
+  case .timedOut: throw TimeoutError(handle: handle)
   }
 }
 
 /// Executes `body`. If it doesn't finish after `duration`, return `nil` and continue running body. When `body` returns
-/// a value after the timeout, `resultReceivedAfterTimeout` is called.
+/// a value or throws an error after the timeout, `resultReceivedAfterTimeout` is called with the outcome.
 ///
 /// - Important: `body` will not be cancelled when the timeout is received. Use the other overload of `withTimeout` if
 ///   `body` should be cancelled after `timeout`.
-package func withTimeout<T: Sendable>(
+@_spi(SourceKitLSP) @inlinable
+public func withTimeout<T: Sendable>(
   _ timeout: Duration,
   body: @escaping @Sendable () async throws -> T,
   resultReceivedAfterTimeout: @escaping @Sendable (_ result: T) async -> Void
 ) async throws -> T? {
-  let didHitTimeout = ThreadSafeBox<Bool>(initialValue: false)
-
-  let stream = AsyncThrowingStream<T?, Error> { continuation in
-    Task {
-      try await Task.sleep(for: timeout)
-      didHitTimeout.withLock { $0 = true }
-      continuation.yield(nil)
-    }
-
-    Task {
-      do {
-        let result = try await body()
-        if didHitTimeout.value {
-          await resultReceivedAfterTimeout(result)
-        }
-        continuation.yield(result)
-      } catch {
-        continuation.yield(with: .failure(error))
-      }
-    }
-  }
-
-  for try await value in stream {
-    return value
-  }
-  // The only reason for the loop above to terminate is if the Task got cancelled or if the continuation finishes
-  // (which it never does).
-  if Task.isCancelled {
-    throw CancellationError()
-  } else {
-    preconditionFailure("Continuation never finishes")
+  switch try await withTimeoutResult(timeout, body: body, resultReceivedAfterTimeout: resultReceivedAfterTimeout) {
+  case .result(let value): return value
+  case .timedOut: return nil
   }
 }
 
 /// Same as `withTimeout` above but allows `body` to return an optional value.
-package func withTimeout<T: Sendable>(
+@_spi(SourceKitLSP) @inlinable
+public func withTimeout<T: Sendable>(
   _ timeout: Duration,
   body: @escaping @Sendable () async throws -> T?,
   resultReceivedAfterTimeout: @escaping @Sendable (_ result: T?) async -> Void
 ) async throws -> T? {
-  let result: T?? = try await withTimeout(timeout, body: body, resultReceivedAfterTimeout: resultReceivedAfterTimeout)
-  switch result {
-  case .none: return nil
-  case .some(.none): return nil
-  case .some(.some(let value)): return value
+  switch try await withTimeoutResult(timeout, body: body, resultReceivedAfterTimeout: resultReceivedAfterTimeout) {
+  case .result(let value): return value
+  case .timedOut: return nil
   }
 }
