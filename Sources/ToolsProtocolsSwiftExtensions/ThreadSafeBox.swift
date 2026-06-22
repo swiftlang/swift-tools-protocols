@@ -21,7 +21,7 @@ public import Synchronization
 @_spi(SourceKitLSP) public final class ThreadSafeBox<Value: ~Copyable>: Sendable {
   @usableFromInline let mtx: Mutex<Value>
 
-  @inlinable public init(initialValue: consuming sending Value) {
+  public init(initialValue: consuming sending Value) {
     self.mtx = Mutex(initialValue)
   }
 
