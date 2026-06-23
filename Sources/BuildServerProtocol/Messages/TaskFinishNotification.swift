@@ -13,7 +13,7 @@
 public import Foundation
 public import LanguageServerProtocol
 
-/// A `build/taskFinish` notification must always be sent after a `build/taskStart`` with the same `taskId` was sent.
+/// A `build/taskFinish` notification must always be sent after a `build/taskStart` with the same `taskId` was sent.
 public struct TaskFinishNotification: BSPNotification {
   public static let method: String = "build/taskFinish"
 
@@ -92,7 +92,7 @@ public struct CompileReportData: Codable, Hashable, Sendable {
 
   /// An optional request id to know the origin of this report.
   ///
-  /// Deprecated: Use the field in TaskFinishParams instead .
+  /// Deprecated: Use the field in TaskFinishParams instead.
   public var originId: String?
 
   /// The total number of reported errors compiling this target.
@@ -178,7 +178,7 @@ public struct TestFinishData: Codable, Hashable, Sendable {
   /// The test execution was cancelled.
   case cancelled = 4
 
-  /// The was not included in execution.
+  /// The test was not included in execution.
   case skipped = 5
 }
 
@@ -193,7 +193,7 @@ public struct TestFinishDataKind: RawRepresentable, Codable, Hashable, Sendable 
 /// This structure is embedded in the `TaskFinishNotification.data` field, when the `dataKind` field contains
 /// `"test-report"`.
 public struct TestReportData: Codable, Hashable, Sendable {
-  /// Deprecated: Use the field in TaskFinishParams instead
+  /// Deprecated: Use the field in TaskFinishParams instead.
   public var originId: String?
 
   /// The build target that was compiled.

@@ -79,7 +79,7 @@ public struct WorkDoneProgressBegin: Codable, Hashable, Sendable {
 
   /// Optional progress percentage to display (value 100 is considered 100%).
   /// If not provided infinite progress is assumed and clients are allowed
-  /// to ignore the `percentage` value in subsequent in report notifications.
+  /// to ignore the `percentage` value in subsequent report notifications.
   ///
   /// The value should be steadily rising. Clients are free to ignore values
   /// that are not following this rule. The value range is [0, 100]
@@ -131,7 +131,7 @@ public struct WorkDoneProgressReport: Codable, Hashable, Sendable {
   /// Controls enablement state of a cancel button. This property is only valid
   /// if a cancel button got requested in the `WorkDoneProgressBegin` payload.
   ///
-  /// Clients that don't support cancellation or don't support control the
+  /// Clients that don't support cancellation or don't support controlling the
   /// button's enablement state are allowed to ignore the setting.
   public var cancellable: Bool?
 
@@ -144,7 +144,7 @@ public struct WorkDoneProgressReport: Codable, Hashable, Sendable {
 
   /// Optional progress percentage to display (value 100 is considered 100%).
   /// If not provided infinite progress is assumed and clients are allowed
-  /// to ignore the `percentage` value in subsequent in report notifications.
+  /// to ignore the `percentage` value in subsequent report notifications.
   ///
   /// The value should be steadily rising. Clients are free to ignore values
   /// that are not following this rule. The value range is [0, 100]
@@ -189,7 +189,7 @@ public struct WorkDoneProgressReport: Codable, Hashable, Sendable {
 }
 
 public struct WorkDoneProgressEnd: Codable, Hashable, Sendable {
-  /// Optional, a final message indicating to for example indicate the outcome
+  /// Optional, a final message indicating, for example, the outcome
   /// of the operation.
   public var message: String?
 
@@ -209,7 +209,7 @@ public struct WorkDoneProgressEnd: Codable, Hashable, Sendable {
       throw DecodingError.dataCorruptedError(
         forKey: .kind,
         in: container,
-        debugDescription: "Kind of WorkDoneProgressReport is not 'end'"
+        debugDescription: "Kind of WorkDoneProgressEnd is not 'end'"
       )
     }
 

@@ -68,7 +68,7 @@ public struct CompletionContext: Codable, Hashable, Sendable {
   /// How the completion was triggered.
   public var triggerKind: CompletionTriggerKind
 
-  /// The trigger character (a single character) that has trigger code complete. Is undefined if `triggerKind !== CompletionTriggerKind.TriggerCharacter`
+  /// The trigger character (a single character) that has triggered code completion. Is undefined if `triggerKind !== CompletionTriggerKind.TriggerCharacter`
   public var triggerCharacter: String?
 
   public init(triggerKind: CompletionTriggerKind, triggerCharacter: String? = nil) {
