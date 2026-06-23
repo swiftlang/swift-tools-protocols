@@ -18,7 +18,7 @@
 ///
 /// **LSP Extension**
 public struct TriggerReindexRequest: LSPRequest {
-  public static let method: String = "workspace/triggerReindex"
+  public static let method: String = "sourcekit/workspace/triggerReindex"
   public typealias Response = VoidResponse
 
   public init() {}
