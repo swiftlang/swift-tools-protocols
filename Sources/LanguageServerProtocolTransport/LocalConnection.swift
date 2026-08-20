@@ -101,6 +101,7 @@ public final class LocalConnection: Connection, Sendable {
     guard let handler = queue.sync(execute: { handler }) else {
       return
     }
+    precondition(self.state == .started)
     handler.handle(notification)
   }
 
