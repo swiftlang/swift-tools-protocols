@@ -364,10 +364,18 @@ private final class LSPAnyDecoder: Decoder {
       return T.init(truncatingIfNeeded: result)
     }
     func decode<T: BinaryFloatingPoint & Decodable>(_ type: T.Type) throws -> T {
-      guard case .double(let result) = value else {
+      switch value {
+      case .double(let result):
+        return T.init(result)
+      case .int(let result):
+        // `LSPAny.init(from:)` decodes whole JSON numbers (eg. `3` or `3.0`) as `.int`, so
+        // allow them to satisfy a `BinaryFloatingPoint` field instead of failing to decode
+        // the entire containing type. Magnitudes beyond the target type's significand are
+        // rounded, as they would be when decoding the JSON into `T` directly.
+        return T.init(result)
+      default:
         throw typeMismatch(T.self, expectedKind: "double", codingPath: codingPath)
       }
-      return T.init(result)
     }
     func decode<T: Decodable>(_ type: T.Type) throws -> T {
       if let lspAny = value as? T {
