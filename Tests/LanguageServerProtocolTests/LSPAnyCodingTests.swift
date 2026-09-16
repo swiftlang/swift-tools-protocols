@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
 import LanguageServerProtocol
 import XCTest
 
@@ -227,6 +228,44 @@ final class LSPAnyCodingTests: XCTestCase {
     // A `.null` value for an optional field should decode as `nil`.
     let lspAny = LSPAny.dictionary(["required": .string("r")])
     XCTAssertEqual(WithOptional(fromLSPAny: lspAny), WithOptional(required: "r", optional: nil))
+  }
+
+  func testDecodeWholeNumberIntoDouble() {
+    // JSON whole numbers (eg. `3`, `3.0` and `3000`) are decoded by `LSPAny.init(from:)`
+    // as `.int`, not `.double`. A `Double?` field should still decode successfully instead
+    // of causing the whole containing struct to fail to decode.
+    // https://github.com/swiftlang/sourcekit-lsp/issues/2761
+    struct Options: Codable, LSPAnyCodable, Equatable {
+      var debounce: Double?
+      var bypass: Bool?
+    }
+    for (literal, expected) in [("3", 3.0), ("3.0", 3.0), ("3000", 3000.0)] {
+      let json = Data(#"{"debounce": \#(literal), "bypass": true}"#.utf8)
+      let lspAny = try! JSONDecoder().decode(LSPAny.self, from: json)
+      XCTAssertEqual(lspAny, .dictionary(["debounce": .int(Int(expected)), "bypass": .bool(true)]))
+      XCTAssertEqual(Options(fromLSPAny: lspAny), Options(debounce: expected, bypass: true))
+    }
+  }
+
+  func testDecodeIntIntoFloatingPointFields() {
+    // An `.int` should satisfy every `BinaryFloatingPoint` field, whether it is required,
+    // optional, a `Float` rather than a `Double`, or an element of an array.
+    struct Floats: Codable, LSPAnyCodable, Equatable {
+      var double: Double
+      var float: Float
+      var optional: Double?
+      var array: [Double]
+    }
+    let lspAny = LSPAny.dictionary([
+      "double": .int(3),
+      "float": .int(4),
+      "optional": .int(5),
+      "array": .array([.int(6), .double(7.5)]),
+    ])
+    XCTAssertEqual(
+      Floats(fromLSPAny: lspAny),
+      Floats(double: 3, float: 4, optional: 5, array: [6, 7.5])
+    )
   }
 
   func testDecodeFailsWhenNotDictionary() {
