@@ -300,6 +300,22 @@ class ConnectionTests: XCTestCase {
 
     try await fulfillmentOfOrThrow(expectation)
   }
+
+  func testCancellationResumesRequestThatIsNeverRepliedTo() async throws {
+    let connectionToServer = connection.clientToServerConnection
+    let task = Task {
+      try await connectionToServer.send(NoReplyRequest())
+    }
+    // Wait for the request to reach the server so that the cancellation is observed by the
+    // cancellation handler instead of by the `Task.isCancelled` check that runs before the request is
+    // sent.
+    try await Task.sleep(for: .milliseconds(100))
+    task.cancel()
+
+    await assertThrowsError(try await task.value) { error in
+      XCTAssert(error is CancellationError, "Received unexpected error \(error)")
+    }
+  }
 }
 
 fileprivate extension JSONRPCConnection {
