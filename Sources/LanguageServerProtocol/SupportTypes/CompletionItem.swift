@@ -161,6 +161,13 @@ public struct CompletionItem: ResponseType, Codable, Hashable, Sendable {
   /// a completion and a completion resolve request.
   public var data: LSPAny?
 
+  /// The `data` interpreted as `SourceKitCompletionItemData`, if it is a SourceKit-LSP completion item.
+  ///
+  /// **(LSP Extension)**
+  public var sourceKitData: SourceKitCompletionItemData? {
+    SourceKitCompletionItemData(fromLSPAny: data)
+  }
+
   public init(
     label: String,
     labelDetails: CompletionItemLabelDetails? = nil,
@@ -201,6 +208,21 @@ public struct CompletionItem: ResponseType, Codable, Hashable, Sendable {
     self.commitCharacters = commitCharacters
     self.command = command
     self.data = data
+  }
+}
+
+/// SourceKit-LSP-specific metadata stored in `CompletionItem.data`.
+///
+/// A client-facing subset of sourcekit-lsp's internal completion item data; the server-internal
+/// resolve fields are intentionally not exposed here.
+///
+/// **(LSP Extension)**
+public struct SourceKitCompletionItemData: LSPAnyCodable, Codable, Hashable, Sendable {
+  /// sourcekitd's `key.semantic_score`.
+  public var semanticScore: Double?
+
+  public init(semanticScore: Double?) {
+    self.semanticScore = semanticScore
   }
 }
 
