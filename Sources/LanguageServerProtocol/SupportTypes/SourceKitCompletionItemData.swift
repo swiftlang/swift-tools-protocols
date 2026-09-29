@@ -38,13 +38,33 @@ public struct SourceKitCompletionItemData: Codable, LSPAnyCodable, Hashable, Sen
   /// The annotated-description XML for the completion's type name, as produced by sourcekitd.
   public var annotatedTypeName: String?
 
+  /// The completion's semantic score, used for ranking (sourcekitd's `key.semantic_score`).
+  public var semanticScore: Double?
+
+  /// The USRs associated with the completion (sourcekitd's `key.associated_usrs`), populated during resolve.
+  public var associatedUSRs: [String]?
+
+  /// The completion's brief documentation (sourcekitd's `key.doc.brief`), populated during resolve.
+  public var docBrief: String?
+
+  /// The completion's full doc-comment XML (sourcekitd's `key.doc.full_as_xml`), populated during resolve.
+  public var docFullAsXML: String?
+
+  /// The diagnostic associated with the completion, if any, populated during resolve when `hasDiagnostic` is set.
+  public var diagnostic: Diagnostic?
+
   public init(
     module: String? = nil,
     groupID: Int? = nil,
     isSystem: Bool? = nil,
     hasDiagnostic: Bool? = nil,
     annotatedDescription: String? = nil,
-    annotatedTypeName: String? = nil
+    annotatedTypeName: String? = nil,
+    semanticScore: Double? = nil,
+    associatedUSRs: [String]? = nil,
+    docBrief: String? = nil,
+    docFullAsXML: String? = nil,
+    diagnostic: Diagnostic? = nil
   ) {
     self.module = module
     self.groupID = groupID
@@ -52,5 +72,26 @@ public struct SourceKitCompletionItemData: Codable, LSPAnyCodable, Hashable, Sen
     self.hasDiagnostic = hasDiagnostic
     self.annotatedDescription = annotatedDescription
     self.annotatedTypeName = annotatedTypeName
+    self.semanticScore = semanticScore
+    self.associatedUSRs = associatedUSRs
+    self.docBrief = docBrief
+    self.docFullAsXML = docFullAsXML
+    self.diagnostic = diagnostic
+  }
+}
+
+extension SourceKitCompletionItemData {
+  /// A diagnostic produced for a completion item, such as a deprecation warning.
+  public struct Diagnostic: Codable, Hashable, Sendable {
+    /// The severity of the diagnostic.
+    public var severity: DiagnosticSeverity?
+
+    /// The diagnostic message.
+    public var message: String
+
+    public init(severity: DiagnosticSeverity? = nil, message: String) {
+      self.severity = severity
+      self.message = message
+    }
   }
 }

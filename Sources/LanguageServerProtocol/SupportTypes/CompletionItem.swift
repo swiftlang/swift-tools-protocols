@@ -161,6 +161,13 @@ public struct CompletionItem: ResponseType, Codable, Hashable, Sendable {
   /// a completion and a completion resolve request.
   public var data: LSPAny?
 
+  /// The `data` interpreted as `SourceKitCompletionItemData`, if it is a SourceKit-LSP completion item.
+  ///
+  /// **(LSP Extension)**
+  public var sourceKitData: SourceKitCompletionItemData? {
+    SourceKitCompletionItemData(fromLSPAny: data)
+  }
+
   public init(
     label: String,
     labelDetails: CompletionItemLabelDetails? = nil,
