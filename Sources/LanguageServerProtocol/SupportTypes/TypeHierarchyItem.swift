@@ -36,6 +36,14 @@ public struct TypeHierarchyItem: ResponseType, Hashable, Sendable {
   /// subtype/supertype requests.
   public var data: LSPAny?
 
+  /// The `data` interpreted as `SourceKitSymbolIdentifier`, if it is a SourceKit-LSP hierarchy item.
+  ///
+  /// **(LSP Extension)**
+  public var sourceKitData: SourceKitSymbolIdentifier? {
+    get { SourceKitSymbolIdentifier(fromLSPAny: data) }
+    set { data = newValue?.encodeToLSPAny() }
+  }
+
   public init(
     name: String,
     kind: SymbolKind,
