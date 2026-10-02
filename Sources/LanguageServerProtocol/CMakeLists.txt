@@ -137,6 +137,8 @@ add_library(LanguageServerProtocol
   SupportTypes/SemanticTokens.swift
   SupportTypes/SemanticTokenTypes.swift
   SupportTypes/ServerCapabilities.swift
+  SupportTypes/SourceKitCompletionItemData.swift
+  SupportTypes/SourceKitCompletionListData.swift
   SupportTypes/StringOrMarkupContent.swift
   SupportTypes/SupportedCodeLensCommand.swift
   SupportTypes/SymbolKind.swift

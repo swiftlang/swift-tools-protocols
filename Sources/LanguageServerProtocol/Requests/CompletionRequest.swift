@@ -173,10 +173,20 @@ public struct CompletionList: ResponseType, Hashable {
   /// The resulting completions.
   public var items: [CompletionItem]
 
-  public init(isIncomplete: Bool, itemDefaults: ItemDefaults? = nil, items: [CompletionItem]) {
+  /// SourceKit-specific reply-level metadata, populated only for clients that opt in via the
+  /// `sourcekit-lsp.completion.extendedItems` experimental capability.
+  public var listData: SourceKitCompletionListData?
+
+  public init(
+    isIncomplete: Bool,
+    itemDefaults: ItemDefaults? = nil,
+    items: [CompletionItem],
+    listData: SourceKitCompletionListData? = nil
+  ) {
     self.isIncomplete = isIncomplete
     self.itemDefaults = itemDefaults
     self.items = items
+    self.listData = listData
   }
 
   public init(from decoder: Decoder) throws {
@@ -185,6 +195,7 @@ public struct CompletionList: ResponseType, Hashable {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       self.isIncomplete = try container.decode(Bool.self, forKey: .isIncomplete)
       self.items = try container.decode([CompletionItem].self, forKey: .items)
+      self.listData = try container.decodeIfPresent(SourceKitCompletionListData.self, forKey: .listData)
       return
     } catch {}
 

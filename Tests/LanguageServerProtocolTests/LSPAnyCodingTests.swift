@@ -583,4 +583,18 @@ final class LSPAnyCodingTests: XCTestCase {
     let original = WithOptional(required: "a", optional: nil)
     XCTAssertEqual(WithOptional(fromLSPAny: original.encodeToLSPAny()), original)
   }
+
+  // MARK: - SourceKitCompletionItemData subset decode
+
+  func testSourceKitCompletionItemDataDecodesSubsetIgnoringExtraKeys() {
+    // The server encodes a superset (resolve routing fields + semanticScore); the client-facing
+    // subset must decode `semanticScore` and ignore the rest.
+    let wire = LSPAny.dictionary([
+      "uri": .string("file:///a.swift"),
+      "sessionId": .int(1),
+      "itemId": .int(2),
+      "semanticScore": .double(0.75),
+    ])
+    XCTAssertEqual(SourceKitCompletionItemData(fromLSPAny: wire)?.semanticScore, 0.75)
+  }
 }
