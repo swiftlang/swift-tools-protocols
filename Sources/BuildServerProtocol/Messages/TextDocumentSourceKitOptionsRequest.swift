@@ -12,6 +12,15 @@
 
 public import LanguageServerProtocol
 
+/// The purpose a `TextDocumentSourceKitOptionsRequest` is being made for, so the build server can tailor the
+/// returned settings to the consumer.
+@frozen public enum SourceKitOptionsPurpose: String, Hashable, Codable, Sendable {
+  /// The options are requested to drive live editor functionality (completion, diagnostics, etc.).
+  case editor
+  /// The options are requested to drive a background index build.
+  case index
+}
+
 /// The `TextDocumentSourceKitOptionsRequest` request is sent from the client to the server to query for the list of
 /// compiler options necessary to compile this file in the given target.
 ///
@@ -35,10 +44,20 @@ public struct TextDocumentSourceKitOptionsRequest: BSPRequest, Hashable {
   /// The language with which the document was opened in the editor.
   public var language: Language
 
-  public init(textDocument: TextDocumentIdentifier, target: BuildTargetIdentifier, language: Language) {
+  /// The purpose of the request. `nil` when sent by a client that predates this field; the server then treats it as
+  /// `.editor`, so explicit-built-module inputs are only grafted for requests that explicitly ask for `.index`.
+  public var purpose: SourceKitOptionsPurpose?
+
+  public init(
+    textDocument: TextDocumentIdentifier,
+    target: BuildTargetIdentifier,
+    language: Language,
+    purpose: SourceKitOptionsPurpose? = nil
+  ) {
     self.textDocument = textDocument
     self.target = target
     self.language = language
+    self.purpose = purpose
   }
 }
 
