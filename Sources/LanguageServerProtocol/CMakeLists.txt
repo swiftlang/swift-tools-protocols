@@ -96,6 +96,7 @@ add_library(LanguageServerProtocol
   Requests/WorkspaceFoldersRequest.swift
   Requests/WorkspacePlaygroundsRefreshRequest.swift
   Requests/WorkspacePlaygroundsRequest.swift
+  Requests/WorkspaceReferencesRequest.swift
   Requests/WorkspaceSemanticTokensRefreshRequest.swift
   Requests/WorkspaceSymbolInfoRequest.swift
   Requests/WorkspaceSymbolNamesRequest.swift
@@ -139,6 +140,7 @@ add_library(LanguageServerProtocol
   SupportTypes/ServerCapabilities.swift
   SupportTypes/SourceKitCompletionItemData.swift
   SupportTypes/SourceKitCompletionListData.swift
+  SupportTypes/SourceKitSymbolIdentifier.swift
   SupportTypes/StringOrMarkupContent.swift
   SupportTypes/SupportedCodeLensCommand.swift
   SupportTypes/SymbolKind.swift

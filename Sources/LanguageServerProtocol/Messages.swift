@@ -89,6 +89,7 @@ public let builtinRequests: [_RequestType.Type] = [
   WorkspaceFoldersRequest.self,
   WorkspacePlaygroundsRefreshRequest.self,
   WorkspacePlaygroundsRequest.self,
+  WorkspaceReferencesRequest.self,
   WorkspaceSemanticTokensRefreshRequest.self,
   WorkspaceSymbolInfoRequest.self,
   WorkspaceSymbolNamesRequest.self,
