@@ -167,6 +167,8 @@ package final class TestServer: MessageHandler {
   package func handle(_ notification: some NotificationType) {
     if notification is EchoNotification {
       self.client.send(notification)
+    } else if notification is CancelRequestNotification {
+      // Mimic a peer that doesn't act on cancellation.
     } else {
       fatalError("Unhandled notification")
     }
@@ -186,6 +188,8 @@ package final class TestServer: MessageHandler {
       } else {
         reply(.success(VoidResponse() as! Request.Response))
       }
+    } else if request is NoReplyRequest {
+      // Mimic an unresponsive peer by never calling `reply`.
     } else {
       fatalError("Unhandled request")
     }
@@ -195,8 +199,8 @@ package final class TestServer: MessageHandler {
 // MARK: Test requests
 
 private let testMessageRegistry = MessageRegistry(
-  requests: [EchoRequest.self, EchoError.self],
-  notifications: [EchoNotification.self, ShowMessageNotification.self]
+  requests: [EchoRequest.self, EchoError.self, NoReplyRequest.self],
+  notifications: [EchoNotification.self, ShowMessageNotification.self, CancelRequestNotification.self]
 )
 
 extension String: LanguageServerProtocol.ResponseType {}
@@ -223,6 +227,14 @@ package struct EchoError: RequestType {
     self.code = code
     self.message = message
   }
+}
+
+/// A request that `TestServer` never replies to, to mimic an unresponsive peer.
+package struct NoReplyRequest: RequestType {
+  package static let method: String = "test_server/no_reply"
+  package typealias Response = VoidResponse
+
+  package init() {}
 }
 
 package struct EchoNotification: NotificationType {

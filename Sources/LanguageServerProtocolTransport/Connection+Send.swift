@@ -23,6 +23,9 @@ extension Connection {
       return id
     } cancel: { requestID in
       self.send(CancelRequestNotification(id: requestID))
+      // Nobody awaits the reply anymore, so stop holding on to the state that would deliver it. A
+      // peer that has become unresponsive may not reply at all, even though it is required to.
+      self.abandonRequest(id: requestID)
     }
   }
 }
