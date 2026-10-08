@@ -164,15 +164,22 @@ public struct SourceKitSourceItemData: LSPAnyCodable, Codable {
   /// the original source file instead of jumping to a file in the build directory.
   public var copyDestinations: [DocumentURI]?
 
+  /// A hint for choosing the canonical target for semantic functionality when the source file
+  /// belongs to more than one target. Lower values are more preferred. `nil` if the build server
+  /// does not distinguish, in which case SourceKit-LSP falls back to a deterministic ordering.
+  public var canonicalTargetPreference: Int? = nil
+
   public init(
     language: Language? = nil,
     kind: SourceKitSourceItemKind? = nil,
     outputPath: String? = nil,
-    copyDestinations: [DocumentURI]? = nil
+    copyDestinations: [DocumentURI]? = nil,
+    canonicalTargetPreference: Int? = nil
   ) {
     self.language = language
     self.kind = kind
     self.outputPath = outputPath
     self.copyDestinations = copyDestinations
+    self.canonicalTargetPreference = canonicalTargetPreference
   }
 }
