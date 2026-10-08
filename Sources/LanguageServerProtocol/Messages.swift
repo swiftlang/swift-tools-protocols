@@ -87,6 +87,7 @@ public let builtinRequests: [_RequestType.Type] = [
   WillSaveWaitUntilTextDocumentRequest.self,
   WorkspaceDiagnosticsRequest.self,
   WorkspaceFoldersRequest.self,
+  WorkspaceMembersRequest.self,
   WorkspacePlaygroundsRefreshRequest.self,
   WorkspacePlaygroundsRequest.self,
   WorkspaceReferencesRequest.self,
