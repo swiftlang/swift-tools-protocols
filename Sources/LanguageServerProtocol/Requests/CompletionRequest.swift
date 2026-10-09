@@ -29,6 +29,10 @@ public struct CompletionRequest: TextDocumentRequest, Hashable {
   public static let method: String = "textDocument/completion"
   public typealias Response = CompletionList
 
+  /// The experimental client capability that opts in to SourceKit's extended completion metadata on completion
+  /// items, the completion list, and `completionItem/resolve`.
+  public static let extendedItemsCapability: String = "sourcekit-lsp.completion.extendedItems"
+
   public var textDocument: TextDocumentIdentifier
 
   public var position: Position
