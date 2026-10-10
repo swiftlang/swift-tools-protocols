@@ -43,6 +43,7 @@ add_library(LanguageServerProtocol
   Requests/DefinitionRequest.swift
   Requests/DiagnosticsRefreshRequest.swift
   Requests/DoccDocumentationRequest.swift
+  Requests/DoccSymbolLinkDefinitionRequest.swift
   Requests/DocumentColorRequest.swift
   Requests/DocumentDiagnosticsRequest.swift
   Requests/DocumentHighlightRequest.swift

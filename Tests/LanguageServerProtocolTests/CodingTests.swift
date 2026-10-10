@@ -1079,6 +1079,23 @@ final class CodingTests: XCTestCase {
     )
   }
 
+  func testDocCSymbolLinkDefinitionRequest() throws {
+    checkDecoding(
+      json: #"""
+        {
+          "symbolLink" : "Foo/bar",
+          "textDocument" : {
+            "uri" : "file:///some/path"
+          }
+        }
+        """#,
+      expected: DocCSymbolLinkDefinitionRequest(
+        textDocument: TextDocumentIdentifier(try DocumentURI(string: "file:///some/path")),
+        symbolLink: "Foo/bar"
+      )
+    )
+  }
+
   func testWorkspaceDocumentDiagnosticReport() throws {
     checkCoding(
       WorkspaceDocumentDiagnosticReport.full(

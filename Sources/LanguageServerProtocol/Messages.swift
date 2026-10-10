@@ -33,6 +33,7 @@ public let builtinRequests: [_RequestType.Type] = [
   DefinitionRequest.self,
   DiagnosticsRefreshRequest.self,
   DoccDocumentationRequest.self,
+  DocCSymbolLinkDefinitionRequest.self,
   DocumentColorRequest.self,
   DocumentDiagnosticsRequest.self,
   DocumentFormattingRequest.self,
