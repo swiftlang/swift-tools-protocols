@@ -50,7 +50,19 @@ public struct BuildTargetPrepareResponse: ResponseType, Hashable {
   /// When omitted, this is the same as an empty array.
   public var implicitlyPreparedTargets: [BuildTargetIdentifier]?
 
-  public init(implicitlyPreparedTargets: [BuildTargetIdentifier]? = nil) {
+  /// Targets whose `textDocument/sourceKitOptions` may have changed as a result of the prepare request.
+  ///
+  /// For example, preparation may produce inputs that the compiler arguments of a target reference. The client should
+  /// discard any options it cached for these targets.
+  ///
+  /// When omitted, this is the same as an empty array.
+  public var targetsWithChangedOptions: [BuildTargetIdentifier]?
+
+  public init(
+    implicitlyPreparedTargets: [BuildTargetIdentifier]? = nil,
+    targetsWithChangedOptions: [BuildTargetIdentifier]? = nil
+  ) {
     self.implicitlyPreparedTargets = implicitlyPreparedTargets
+    self.targetsWithChangedOptions = targetsWithChangedOptions
   }
 }
