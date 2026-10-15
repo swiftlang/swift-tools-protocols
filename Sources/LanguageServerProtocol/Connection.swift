@@ -47,9 +47,24 @@ public protocol Connection: Sendable {
     id: RequestID,
     reply: @escaping @Sendable (LSPResult<Request.Response>) -> Void
   )
+
+  /// Stop expecting a reply for the request with the given ID and release the state that is held to
+  /// deliver it.
+  ///
+  /// A reply that the peer sends afterwards is discarded. This is called when nobody is interested
+  /// in the reply anymore, eg. because the task that awaits it was cancelled. A peer is required to
+  /// reply to every request, including one that was cancelled with `$/cancelRequest`, but a peer that
+  /// has become unresponsive may not do so. Without this, a conformer that tracks its in-flight
+  /// requests would hold their state until the connection is closed.
+  ///
+  /// The default implementation does nothing, which is correct for conformers that don't hold any
+  /// state per in-flight request.
+  func abandonRequest(id: RequestID)
 }
 
 extension Connection {
+  public func abandonRequest(id: RequestID) {}
+
   @available(*, deprecated, message: "Conformers should implement send(_:id:method:reply:)")
   public func send<Request: RequestType>(
     _ request: Request,
