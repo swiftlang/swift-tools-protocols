@@ -13,7 +13,8 @@
 /// Identifies a symbol in the index of a SourceKit-LSP workspace.
 ///
 /// Stored in `CallHierarchyItem.data` and `TypeHierarchyItem.data`, and used as the input of
-/// ``WorkspaceReferencesRequest``. Clients may construct it from a USR they already know.
+/// ``WorkspaceReferencesRequest`` and ``WorkspaceMembersRequest``. Clients may construct it from a USR
+/// they already know.
 ///
 /// **(LSP Extension)**
 public struct SourceKitSymbolIdentifier: LSPAnyCodable, Codable, Hashable, Sendable {
