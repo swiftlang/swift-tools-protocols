@@ -12,6 +12,16 @@
 
 public import Foundation
 
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#elseif canImport(Musl)
+import Musl
+#elseif canImport(Android)
+import Android
+#endif
+
 #if os(Windows)
 import WinSDK
 #endif
@@ -124,20 +134,14 @@ extension URL {
   public var fileModificationDate: Date {
     get throws {
       var mtime = Date.distantPast
-      let fileManager = FileManager.default
       var visitedURLs: Set<URL> = []
       var url = self
       while true {
-        let path = try url.filePath
-        let fileAttrs = try fileManager.attributesOfItem(atPath: path)
-
-        guard let fileModTime = fileAttrs[FileAttributeKey.modificationDate] as? Date else {
-          throw FilePathError.fileAttributesDontHaveModificationDate(url)
-        }
+        let (fileModTime, symLinkPath) = try url.modificationDateAndSymlinkDestination()
         mtime = max(mtime, fileModTime)
 
         // Follow the symlink and find the most recent mtime.
-        if let symLinkPath = try? fileManager.destinationOfSymbolicLink(atPath: path) {
+        if let symLinkPath {
           url = URL(filePath: symLinkPath, relativeTo: url)
           guard visitedURLs.insert(url).inserted else {
             throw FilePathError.circularSymlink(url)
@@ -148,5 +152,70 @@ extension URL {
       }
       return mtime
     }
+  }
+
+  /// Assuming this URL is a file URL, returns the modification date of the file without following symlinks and, if
+  /// the file is a symlink, its destination.
+  private func modificationDateAndSymlinkDestination() throws -> (modificationDate: Date, symlinkDestination: String?) {
+    #if os(Windows)
+    return try modificationDateAndSymlinkDestinationUsingFileManager()
+    #else
+    guard self.isFileURL else {
+      throw FilePathError.noFileURL(self)
+    }
+    // A single `lstat` is much cheaper than reading all file attributes and trying to read a symlink destination for
+    // every file through `FileManager`.
+    let result = try self.withUnsafeFileSystemRepresentation { path -> (Date, String?)? in
+      guard let path else {
+        throw FilePathError.noFileSystemRepresentation(self)
+      }
+      var fileInfo = stat()
+      guard lstat(path, &fileInfo) == 0 else {
+        return nil
+      }
+      #if canImport(Darwin)
+      let modificationTime = fileInfo.st_mtimespec
+      #else
+      let modificationTime = fileInfo.st_mtim
+      #endif
+      // Same computation as `FileManager` so that the dates are equal to the ones it returns.
+      let modificationDate = Date(
+        timeIntervalSinceReferenceDate: TimeInterval(modificationTime.tv_sec)
+          - Date.timeIntervalBetween1970AndReferenceDate + TimeInterval(modificationTime.tv_nsec) / 1_000_000_000.0
+      )
+      guard (fileInfo.st_mode & S_IFMT) == S_IFLNK else {
+        return (modificationDate, nil)
+      }
+      // For symlinks, `st_size` is the length of the destination path.
+      let bufferSize = Int(fileInfo.st_size) + 1
+      let destination = withUnsafeTemporaryAllocation(of: CChar.self, capacity: bufferSize) { buffer -> String? in
+        let length = readlink(path, buffer.baseAddress!, bufferSize)
+        guard length >= 0, length < bufferSize else {
+          return nil
+        }
+        return String(decoding: UnsafeRawBufferPointer(start: buffer.baseAddress!, count: length), as: UTF8.self)
+      }
+      guard let destination else {
+        return nil
+      }
+      return (modificationDate, destination)
+    }
+    if let result {
+      return result
+    }
+    // If the file couldn't be inspected, use `FileManager` so that callers get the same errors as from it.
+    return try modificationDateAndSymlinkDestinationUsingFileManager()
+    #endif
+  }
+
+  private func modificationDateAndSymlinkDestinationUsingFileManager() throws -> (
+    modificationDate: Date, symlinkDestination: String?
+  ) {
+    let path = try self.filePath
+    let fileAttrs = try FileManager.default.attributesOfItem(atPath: path)
+    guard let fileModTime = fileAttrs[FileAttributeKey.modificationDate] as? Date else {
+      throw FilePathError.fileAttributesDontHaveModificationDate(self)
+    }
+    return (fileModTime, try? FileManager.default.destinationOfSymbolicLink(atPath: path))
   }
 }
