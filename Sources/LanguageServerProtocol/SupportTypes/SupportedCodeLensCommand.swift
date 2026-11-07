@@ -29,4 +29,7 @@ public struct SupportedCodeLensCommand: Codable, Hashable, RawRepresentable, Sen
 
   /// Lens to run the playground
   public static let play: Self = Self(rawValue: "swift.play")
+
+  /// Lens to show references to a symbol
+  public static let references: Self = Self(rawValue: "swift.references")
 }
