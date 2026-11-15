@@ -95,17 +95,26 @@ public struct SourceKitOptionsResponse: ResponseType, Hashable {
   /// interpreted by SourceKit-LSP.
   public var data: LSPAny?
 
+  /// The target SourceKit-LSP used to look up the compiler arguments, identified by the URI the BSP server uses for it.
+  ///
+  /// This is the requested target, or the target SourceKit-LSP inferred for the document, which can be the target of a
+  /// file that includes it. When `kind` is `fallback`, the build server didn't provide arguments for it. `nil` if
+  /// SourceKit-LSP found no target for the document.
+  public var target: DocumentURI?
+
   public init(
     compilerArguments: [String],
     workingDirectory: String? = nil,
     kind: SourceKitOptionsKind,
     didPrepareTarget: Bool? = nil,
-    data: LSPAny? = nil
+    data: LSPAny? = nil,
+    target: DocumentURI? = nil
   ) {
     self.compilerArguments = compilerArguments
     self.workingDirectory = workingDirectory
     self.kind = kind
     self.didPrepareTarget = didPrepareTarget
     self.data = data
+    self.target = target
   }
 }
