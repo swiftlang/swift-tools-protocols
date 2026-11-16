@@ -1664,6 +1664,38 @@ final class CodingTests: XCTestCase {
         """
     )
   }
+
+  func testSourceKitOptionsResponseCoding() throws {
+    checkCoding(
+      SourceKitOptionsResponse(
+        compilerArguments: ["-c", "/foo.cpp"],
+        kind: .normal,
+        target: try DocumentURI(string: "build://target")
+      ),
+      json: """
+        {
+          "compilerArguments" : [
+            "-c",
+            "/foo.cpp"
+          ],
+          "kind" : "normal",
+          "target" : "build://target"
+        }
+        """
+    )
+
+    checkCoding(
+      SourceKitOptionsResponse(compilerArguments: ["/foo.cpp"], kind: .fallback),
+      json: """
+        {
+          "compilerArguments" : [
+            "/foo.cpp"
+          ],
+          "kind" : "fallback"
+        }
+        """
+    )
+  }
 }
 
 func with<T>(_ value: T, mutate: (inout T) -> Void) -> T {
