@@ -83,4 +83,11 @@ public final class LegacyNameFallbackConnection: Connection, Sendable {
   public func changeReceiveHandler(_ handler: any MessageHandler) {
     (inner as? JSONRPCConnection)?.changeReceiveHandler(handler)
   }
+
+  /// A request that is being retried under its legacy method name runs on `inner` under a request ID
+  /// of its own, which this cannot abandon. Retrying only happens after the peer replied to the
+  /// first attempt, so a peer that stops replying never reaches that state.
+  public func abandonRequest(id: RequestID) {
+    inner.abandonRequest(id: id)
+  }
 }

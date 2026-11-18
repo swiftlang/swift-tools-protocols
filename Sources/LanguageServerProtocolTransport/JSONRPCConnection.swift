@@ -32,6 +32,9 @@ import WinSDK
 import struct CDispatch.dispatch_fd_t
 #endif
 
+/// The maximum number of request IDs that `JSONRPCConnection` remembers as abandoned.
+private let maxAbandonedRequestIDs = 100
+
 /// A connection between a message handler (e.g. language server) in the same process as the connection object and a
 /// remote message handler (e.g. language client) that may run in another process using JSON RPC messages sent over a
 /// pair of in/out file descriptors.
@@ -106,6 +109,13 @@ public final class JSONRPCConnection: Connection {
   ///
   /// All accesses to `outstandingRequests` must be on `queue` to avoid race conditions.
   private nonisolated(unsafe) var outstandingRequests: [RequestID: OutstandingRequest] = [:]
+
+  /// The IDs of the requests that were removed from `outstandingRequests` by `abandonRequest(id:)`,
+  /// oldest first. A reply for one of these is expected and gets discarded instead of being logged
+  /// as a reply for an unknown request.
+  ///
+  /// All accesses to `abandonedRequestIDs` must be on `queue` to avoid race conditions.
+  private nonisolated(unsafe) var abandonedRequestIDs: [RequestID] = []
 
   /// A handler that will be called asynchronously when the connection is being
   /// closed.
@@ -512,7 +522,7 @@ public final class JSONRPCConnection: Connection {
       }
     case .response(let response, let id):
       guard let outstanding = outstandingRequests.removeValue(forKey: id) else {
-        logger.error("No outstanding requests for response ID \(id, privacy: .public)")
+        logUnknownResponse(id: id)
         return
       }
       outstanding.replyHandler(.success(response))
@@ -522,11 +532,25 @@ public final class JSONRPCConnection: Connection {
         return
       }
       guard let outstanding = outstandingRequests.removeValue(forKey: id) else {
-        logger.error("No outstanding requests for error response ID \(id, privacy: .public)")
+        logUnknownResponse(id: id)
         return
       }
       outstanding.replyHandler(.failure(error))
     }
+  }
+
+  /// Log that a reply was received for a request that is not in `outstandingRequests`, at a severity
+  /// that reflects whether the reply was expected.
+  ///
+  /// - Important: Must be called on `queue`
+  private func logUnknownResponse(id: RequestID) {
+    dispatchPrecondition(condition: .onQueue(queue))
+    guard let index = abandonedRequestIDs.firstIndex(of: id) else {
+      logger.error("No outstanding requests for response ID \(id, privacy: .public)")
+      return
+    }
+    abandonedRequestIDs.remove(at: index)
+    logger.debug("Discarding reply for abandoned request ID \(id, privacy: .public)")
   }
 
   /// Send the raw data to the receiving end of this connection.
@@ -736,6 +760,25 @@ public final class JSONRPCConnection: Connection {
         """
       )
       self.sendAssumingOnQueue(.request(request, method: method, id: id))
+    }
+  }
+
+  public func abandonRequest(id: RequestID) {
+    queue.async {
+      guard self.outstandingRequests.removeValue(forKey: id) != nil else {
+        // The peer already replied, so there is nothing to release and no reply left to discard.
+        return
+      }
+      logger.debug("Abandoning request \(id, privacy: .public) to \(self.name, privacy: .public)")
+      // Cap the number of tracked IDs: an unresponsive peer may never reply to an abandoned request,
+      // in which case its ID would be tracked forever, which is the unbounded growth that abandoning
+      // the request is meant to avoid in the first place. Dropping the oldest ID only means that a
+      // reply which arrives after `maxAbandonedRequestIDs` further requests were abandoned is logged
+      // as a reply for an unknown request.
+      if self.abandonedRequestIDs.count >= maxAbandonedRequestIDs {
+        self.abandonedRequestIDs.removeFirst()
+      }
+      self.abandonedRequestIDs.append(id)
     }
   }
 
