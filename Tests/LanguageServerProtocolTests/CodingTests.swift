@@ -1685,6 +1685,26 @@ final class CodingTests: XCTestCase {
     )
 
     checkCoding(
+      SourceKitOptionsResponse(
+        compilerArguments: ["-c", "/foo.cpp"],
+        kind: .normal,
+        target: try DocumentURI(string: "build://target"),
+        mainFile: try DocumentURI(string: "file:///foo.cpp")
+      ),
+      json: """
+        {
+          "compilerArguments" : [
+            "-c",
+            "/foo.cpp"
+          ],
+          "kind" : "normal",
+          "mainFile" : "file:///foo.cpp",
+          "target" : "build://target"
+        }
+        """
+    )
+
+    checkCoding(
       SourceKitOptionsResponse(compilerArguments: ["/foo.cpp"], kind: .fallback),
       json: """
         {

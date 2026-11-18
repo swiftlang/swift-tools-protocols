@@ -102,13 +102,25 @@ public struct SourceKitOptionsResponse: ResponseType, Hashable {
   /// SourceKit-LSP found no target for the document.
   public var target: DocumentURI?
 
+  /// The file that `compilerArguments` compile.
+  ///
+  /// When this is the requested document, the arguments compile the document itself. If the build compiles the
+  /// document only by including it in another file, such as a unity build file, the arguments are that file's
+  /// arguments with the document substituted for it.
+  ///
+  /// When this is another file, the document is a header or another file that is only ever included, and the arguments
+  /// are those of a file that includes it, unchanged: the document should be parsed as part of compiling `mainFile`.
+  /// `nil` if SourceKit-LSP didn't report it.
+  public var mainFile: DocumentURI?
+
   public init(
     compilerArguments: [String],
     workingDirectory: String? = nil,
     kind: SourceKitOptionsKind,
     didPrepareTarget: Bool? = nil,
     data: LSPAny? = nil,
-    target: DocumentURI? = nil
+    target: DocumentURI? = nil,
+    mainFile: DocumentURI? = nil
   ) {
     self.compilerArguments = compilerArguments
     self.workingDirectory = workingDirectory
@@ -116,5 +128,6 @@ public struct SourceKitOptionsResponse: ResponseType, Hashable {
     self.didPrepareTarget = didPrepareTarget
     self.data = data
     self.target = target
+    self.mainFile = mainFile
   }
 }
