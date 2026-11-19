@@ -240,7 +240,7 @@ var dependencies: [Package.Dependency] {
   } else if useLocalDependencies {
     return []
   } else {
-    let relatedDependenciesBranch = "main"
+    let relatedDependenciesBranch = "release/6.5.x"
 
     return [
       // Not a build dependency. Used so the "Format Source Code" command plugin can be used to format sourcekit-lsp
