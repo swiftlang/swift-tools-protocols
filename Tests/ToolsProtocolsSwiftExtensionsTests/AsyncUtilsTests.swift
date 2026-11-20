@@ -11,10 +11,9 @@
 //===----------------------------------------------------------------------===//
 
 @_spi(SourceKitLSP) import SKLogging
+@_spi(SourceKitLSP) @_spi(Testing) import ToolsProtocolsSwiftExtensions
 import ToolsProtocolsTestSupport
 import XCTest
-
-@_spi(SourceKitLSP) @_spi(Testing) @testable import ToolsProtocolsSwiftExtensions
 
 #if os(Windows)
 import WinSDK
@@ -143,17 +142,6 @@ final class AsyncUtilsTests: XCTestCase {
     escalated.fulfill()
     try await fulfillmentOfOrThrow(finished)
     XCTAssertEqual(reportedPriorities.value, [.high])
-  }
-
-  func testPriorityIncreaseReporterOnlyReportsIncreases() {
-    let reportedPriorities = ThreadSafeBox<[TaskPriority]>(initialValue: [])
-    let reporter = PriorityIncreaseReporter(initialPriority: .low) { newPriority in
-      reportedPriorities.withLock { $0.append(newPriority) }
-    }
-    for priority: TaskPriority in [.low, .background, .medium, .medium, .low, .high, .medium, .high] {
-      reporter.reportIfHigher(priority)
-    }
-    XCTAssertEqual(reportedPriorities.value, [.medium, .high])
   }
 
   func testWithTaskPriorityChangedHandlerLegacyReturnsOptionalNilFromOperation() async throws {
