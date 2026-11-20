@@ -11,9 +11,10 @@
 //===----------------------------------------------------------------------===//
 
 @_spi(SourceKitLSP) import SKLogging
-@_spi(SourceKitLSP) @_spi(Testing) import ToolsProtocolsSwiftExtensions
 import ToolsProtocolsTestSupport
 import XCTest
+
+@_spi(SourceKitLSP) @_spi(Testing) @testable import ToolsProtocolsSwiftExtensions
 
 #if os(Windows)
 import WinSDK
@@ -96,6 +97,63 @@ final class AsyncUtilsTests: XCTestCase {
       try await task.value
     }.value
     XCTAssertTrue(callbackCalled.value)
+  }
+
+  func testWithTaskPriorityChangedHandlerDoesNotReportUnchangedPriority() async throws {
+    let finished = self.expectation(description: "Operation finished")
+    let reportedPriorities = ThreadSafeBox<[TaskPriority]>(initialValue: [])
+    // Don't await the task: that would escalate its priority.
+    Task.detached(priority: .low) {
+      await withTaskPriorityChangedHandler(
+        initialPriority: .low,
+        operation: {
+          try? await Task.sleep(for: .milliseconds(200))
+        },
+        taskPriorityChanged: { newPriority in
+          reportedPriorities.withLock { $0.append(newPriority) }
+        }
+      )
+      finished.fulfill()
+    }
+    try await fulfillmentOfOrThrow(finished)
+    XCTAssertEqual(reportedPriorities.value, [])
+  }
+
+  func testWithTaskPriorityChangedHandlerReportsEscalationBeforeEntryOnce() async throws {
+    guard #available(macOS 26, iOS 26, macCatalyst 26, *) else {
+      throw XCTSkip("Task.escalatePriority(to:) is not available")
+    }
+    let escalated = self.expectation(description: "Task escalated")
+    let finished = self.expectation(description: "Operation finished")
+    let reportedPriorities = ThreadSafeBox<[TaskPriority]>(initialValue: [])
+    let task = Task.detached(priority: .low) {
+      try await fulfillmentOfOrThrow(escalated)
+      await withTaskPriorityChangedHandler(
+        initialPriority: .low,
+        operation: {
+          try? await Task.sleep(for: .milliseconds(200))
+        },
+        taskPriorityChanged: { newPriority in
+          reportedPriorities.withLock { $0.append(newPriority) }
+        }
+      )
+      finished.fulfill()
+    }
+    task.escalatePriority(to: .high)
+    escalated.fulfill()
+    try await fulfillmentOfOrThrow(finished)
+    XCTAssertEqual(reportedPriorities.value, [.high])
+  }
+
+  func testPriorityIncreaseReporterOnlyReportsIncreases() {
+    let reportedPriorities = ThreadSafeBox<[TaskPriority]>(initialValue: [])
+    let reporter = PriorityIncreaseReporter(initialPriority: .low) { newPriority in
+      reportedPriorities.withLock { $0.append(newPriority) }
+    }
+    for priority: TaskPriority in [.low, .background, .medium, .medium, .low, .high, .medium, .high] {
+      reporter.reportIfHigher(priority)
+    }
+    XCTAssertEqual(reportedPriorities.value, [.medium, .high])
   }
 
   func testWithTaskPriorityChangedHandlerLegacyReturnsOptionalNilFromOperation() async throws {
