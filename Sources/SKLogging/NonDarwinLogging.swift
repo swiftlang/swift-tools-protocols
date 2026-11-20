@@ -358,19 +358,23 @@ public struct NonDarwinLogger: Sendable {
 
   /// Logs the given message at the given level.
   ///
-  /// Logging is performed asynchronously to allow the execution of the main
-  /// program to finish as quickly as possible.
+  /// The message is formatted right away but written asynchronously to allow
+  /// the execution of the main program to finish as quickly as possible.
+  /// Formatting the message later could access state that is no longer valid
+  /// by then, eg. the objects of a C++ library that have been destroyed because
+  /// the process is exiting.
   @_spi(SourceKitLSP) public func log(
     level: NonDarwinLogLevel,
-    _ message: @autoclosure @escaping @Sendable () -> NonDarwinLogMessage
+    _ message: @autoclosure () -> NonDarwinLogMessage
   ) {
     guard level >= self.logLevel else { return }
     let date = Date()
+    let message = message().value.string(for: self.privacyLevel)
     loggingQueue.async(priority: .utility) { @LogHandlerActor in
       // Truncate log message after 10.000 characters to avoid flooding the log with huge log messages (eg. from a
       // sourcekitd response). 10.000 characters was chosen because it seems to fit the result of most sourcekitd
       // responses that are not generated interface or global completion results (which are a lot bigger).
-      var message = message().value.string(for: self.privacyLevel)
+      var message = message
       if message.utf8.count > 10_000 {
         // Check for UTF-8 byte length first because that's faster since it doesn't need to count UTF-8 characters.
         // Truncate using `.prefix` to avoid cutting of in the middle of a UTF-8 multi-byte character.
