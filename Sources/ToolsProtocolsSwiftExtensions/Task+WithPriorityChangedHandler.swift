@@ -15,9 +15,10 @@ import Synchronization
 /// Runs `operation`. If the task's priority changes while the operation is running, calls `taskPriorityChanged`
 /// with the new priority.
 ///
-/// Unlike `withTaskPriorityEscalationHandler`, this also calls `taskPriorityChanged` once at entry if the
-/// current task is already escalated from `initialPriority` — escalations that happened before the handler
-/// was registered would otherwise be invisible to the caller.
+/// `taskPriorityChanged` is only called with priorities higher than `initialPriority` and than the priorities it was
+/// called with before. If the current task is already escalated from `initialPriority` at entry,
+/// `taskPriorityChanged` is called with the escalated priority — escalations that happened before the handler was
+/// registered would otherwise be invisible to the caller.
 ///
 /// On platforms without the runtime-provided priority escalation hook (pre SwiftStdlib 6.2), falls back to
 /// polling `Task.currentPriority` every `pollingInterval`.
@@ -29,17 +30,16 @@ public func withTaskPriorityChangedHandler<T: Sendable>(
   taskPriorityChanged: @escaping @Sendable (_ newPriority: TaskPriority) -> Void
 ) async rethrows -> T {
   if #available(macOS 26, iOS 26, macCatalyst 26, *) {
+    // Depending on the runtime, the escalation handler is also called when it is installed, with the task's current
+    // priority, which isn't necessarily a change. Only report priorities that are higher than any reported before.
+    let reporter = PriorityIncreaseReporter(initialPriority: initialPriority, taskPriorityChanged: taskPriorityChanged)
     return try await withTaskPriorityEscalationHandler(
       operation: {
-        // If the task is already escalated from `initialPriority`, notify the caller;
-        // otherwise it wouldn't know about it because the handler hasn't been registered until now.
-        let currentPriority = Task.currentPriority
-        if currentPriority > initialPriority {
-          Task { taskPriorityChanged(currentPriority) }
-        }
+        // If the task was escalated before the handler was installed, the runtime might not report it.
+        reporter.reportIfHigher(Task.currentPriority)
         return try await operation()
       },
-      onPriorityEscalated: { _, newPriority in taskPriorityChanged(newPriority) }
+      onPriorityEscalated: { _, newPriority in reporter.reportIfHigher(newPriority) }
     )
   } else {
     return try await withTaskPriorityChangedHandlerLegacy(
@@ -48,6 +48,31 @@ public func withTaskPriorityChangedHandler<T: Sendable>(
       operation: operation,
       taskPriorityChanged: taskPriorityChanged
     )
+  }
+}
+
+/// Calls `taskPriorityChanged` with priorities that are higher than the initial priority and than any priority it was
+/// called with before.
+@usableFromInline
+final class PriorityIncreaseReporter: Sendable {
+  private let highestReportedPriority: Atomic<TaskPriority.RawValue>
+  private let taskPriorityChanged: @Sendable (_ newPriority: TaskPriority) -> Void
+
+  @usableFromInline
+  init(
+    initialPriority: TaskPriority,
+    taskPriorityChanged: @escaping @Sendable (_ newPriority: TaskPriority) -> Void
+  ) {
+    self.highestReportedPriority = Atomic(initialPriority.rawValue)
+    self.taskPriorityChanged = taskPriorityChanged
+  }
+
+  @usableFromInline
+  func reportIfHigher(_ priority: TaskPriority) {
+    let previous = highestReportedPriority.max(priority.rawValue, ordering: .relaxed).oldValue
+    if previous < priority.rawValue {
+      taskPriorityChanged(priority)
+    }
   }
 }
 

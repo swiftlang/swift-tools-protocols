@@ -98,6 +98,52 @@ final class AsyncUtilsTests: XCTestCase {
     XCTAssertTrue(callbackCalled.value)
   }
 
+  func testWithTaskPriorityChangedHandlerDoesNotReportUnchangedPriority() async throws {
+    let finished = self.expectation(description: "Operation finished")
+    let reportedPriorities = ThreadSafeBox<[TaskPriority]>(initialValue: [])
+    // Don't await the task: that would escalate its priority.
+    Task.detached(priority: .low) {
+      await withTaskPriorityChangedHandler(
+        initialPriority: .low,
+        operation: {
+          try? await Task.sleep(for: .milliseconds(200))
+        },
+        taskPriorityChanged: { newPriority in
+          reportedPriorities.withLock { $0.append(newPriority) }
+        }
+      )
+      finished.fulfill()
+    }
+    try await fulfillmentOfOrThrow(finished)
+    XCTAssertEqual(reportedPriorities.value, [])
+  }
+
+  func testWithTaskPriorityChangedHandlerReportsEscalationBeforeEntryOnce() async throws {
+    guard #available(macOS 26, iOS 26, macCatalyst 26, *) else {
+      throw XCTSkip("Task.escalatePriority(to:) is not available")
+    }
+    let escalated = self.expectation(description: "Task escalated")
+    let finished = self.expectation(description: "Operation finished")
+    let reportedPriorities = ThreadSafeBox<[TaskPriority]>(initialValue: [])
+    let task = Task.detached(priority: .low) {
+      try await fulfillmentOfOrThrow(escalated)
+      await withTaskPriorityChangedHandler(
+        initialPriority: .low,
+        operation: {
+          try? await Task.sleep(for: .milliseconds(200))
+        },
+        taskPriorityChanged: { newPriority in
+          reportedPriorities.withLock { $0.append(newPriority) }
+        }
+      )
+      finished.fulfill()
+    }
+    task.escalatePriority(to: .high)
+    escalated.fulfill()
+    try await fulfillmentOfOrThrow(finished)
+    XCTAssertEqual(reportedPriorities.value, [.high])
+  }
+
   func testWithTaskPriorityChangedHandlerLegacyReturnsOptionalNilFromOperation() async throws {
     // When the operation's `T` is itself an `Optional`, verify `nil` return
     // value is propagated as the operation's result.
