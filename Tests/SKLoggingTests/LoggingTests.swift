@@ -235,4 +235,44 @@ final class LoggingTests: XCTestCase {
       $0.log("got \(true)")
     }
   }
+
+  func testMessageIsFormattedBeforeLogReturns() async {
+    // The values in a log message might describe state that is no longer valid once `log` returns,
+    // eg. the objects of a C++ library that are destroyed because the process is exiting.
+
+    // Block the logging queue while writing the first message, so that nothing that the logging
+    // queue does for the second message can happen before `log` returns.
+    let firstMessageCanBeWritten = DispatchSemaphore(value: 0)
+    let logger = NonDarwinLogger(
+      subsystem: LoggingScope.subsystem,
+      category: "test",
+      logLevel: .debug,
+      privacyLevel: .private,
+      overrideLogHandler: { message in
+        if message.hasSuffix("\nfirst\n---") {
+          firstMessageCanBeWritten.wait()
+        }
+      }
+    )
+    logger.log(level: .default, "first")
+
+    // nonisolated(unsafe) because the logging queue is blocked while the value is read.
+    nonisolated(unsafe) var described = false
+    logger.log(level: .default, "second \(DescriptionRecorder { described = true })")
+    let describedBeforeLogReturned = described
+
+    firstMessageCanBeWritten.signal()
+    await NonDarwinLogger.flush()
+    XCTAssertTrue(describedBeforeLogReturned)
+  }
+}
+
+/// A value that calls `onDescribe` when it is described.
+private struct DescriptionRecorder: CustomStringConvertible, Sendable {
+  let onDescribe: @Sendable () -> Void
+
+  var description: String {
+    onDescribe()
+    return "described"
+  }
 }
