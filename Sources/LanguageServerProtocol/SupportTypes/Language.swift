@@ -73,6 +73,7 @@ extension Language: CustomStringConvertible, CustomDebugStringConvertible {
     case .lua: return "Lua"
     case .makefile: return "Makefile"
     case .markdown: return "Markdown"
+    case .metal: return "Metal"
     case .objective_c: return "Objective-C"
     case .objective_cpp: return "Objective-C++"
     case .perl: return "Perl"
@@ -135,6 +136,7 @@ public extension Language {
   static let lua = Language(rawValue: "lua")
   static let makefile = Language(rawValue: "makefile")
   static let markdown = Language(rawValue: "markdown")
+  static let metal = Language(rawValue: "metal")  // Metal Shading Language
   static let objective_c = Language(rawValue: "objective-c")
   static let objective_cpp = Language(rawValue: "objective-cpp")
   static let perl = Language(rawValue: "perl")
